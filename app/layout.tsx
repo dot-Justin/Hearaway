@@ -69,8 +69,8 @@ const articulat = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Skypin",
-  description: "Listen anywhere",
+  title: "Hearaway",
+  description: "The world, in sound.",
 };
 
 export default function RootLayout({
@@ -91,7 +91,7 @@ export default function RootLayout({
                   if (parts.length === 2) return parts.pop().split(';').shift();
                 }
 
-                const theme = getCookie('skypin-theme');
+                const theme = getCookie('hearaway-theme');
                 // Default to dark mode if no cookie exists
                 if (theme === 'dark' || !theme) {
                   document.documentElement.classList.add('dark');

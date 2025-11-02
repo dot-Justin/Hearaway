@@ -24,11 +24,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   // Mark as mounted and sync with cookie if needed
   useEffect(() => {
-    const savedTheme = Cookies.get("skypin-theme") as Theme | undefined;
+    const savedTheme = Cookies.get("hearaway-theme") as Theme | undefined;
 
     // If no cookie exists, set default to dark
     if (!savedTheme) {
-      Cookies.set("skypin-theme", "dark", { expires: 365 });
+      Cookies.set("hearaway-theme", "dark", { expires: 365 });
     }
 
     setMounted(true);
@@ -37,7 +37,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const toggleTheme = () => {
     const newTheme = theme === "dark" ? "light" : "dark";
     setTheme(newTheme);
-    Cookies.set("skypin-theme", newTheme, { expires: 365 });
+    Cookies.set("hearaway-theme", newTheme, { expires: 365 });
 
     // Apply theme class to document
     const root = document.documentElement;

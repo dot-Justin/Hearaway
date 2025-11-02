@@ -1,5 +1,5 @@
 {
-  "name": "skypin",
+  "name": "hearaway",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "build-biomes": "tsx scripts/buildBiomeData.ts",
-    "build-image-counts": "tsx scripts/generateImageCounts.ts"
+    "build-image-counts": "tsx scripts/generateImageCounts.ts",
+    "convert-audio": "tsx scripts/convertAudioToOgg.ts"
   },
   "dependencies": {
     "@turf/bbox": "^7.2.0",

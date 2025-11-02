@@ -403,7 +403,7 @@ export async function runFullValidation(): Promise<{
  * ```
  */
 export const consoleHelp = `
-Skypin Audio System Test Functions:
+Hearaway Audio System Test Functions:
 
 1. Basic Test:
    await testAudioSystem()

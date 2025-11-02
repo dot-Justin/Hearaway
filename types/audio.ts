@@ -1,5 +1,5 @@
 /**
- * Audio system type definitions for Skypin ambient soundscape.
+ * Audio system type definitions for Hearaway ambient soundscape.
  *
  * These types define the core contracts for the Web Audio API-based
  * audio engine, sound layering system, and biome-to-sound mappings.

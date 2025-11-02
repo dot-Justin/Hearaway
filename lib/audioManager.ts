@@ -1,5 +1,5 @@
 /**
- * Core Audio Engine for Skypin Ambient Soundscape.
+ * Core Audio Engine for Hearaway Ambient Soundscape.
  *
  * Web Audio API-based manager that handles:
  * - Multiple simultaneous looping tracks with seamless crossfades

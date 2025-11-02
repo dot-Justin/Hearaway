@@ -1,5 +1,5 @@
 /**
- * Audio utility functions for Skypin soundscape system.
+ * Audio utility functions for Hearaway soundscape system.
  *
  * Provides helpers for file path mapping, fade duration calculation,
  * weather intensity analysis, and volume curve generation.
@@ -16,49 +16,72 @@ import type { WeatherIntensity } from '@/types/audio';
  */
 const SOUND_PATH_MAP: Record<string, string> = {
   // Animals
-  birds_far: 'animals/birds_far.ogg',
-  'birds-forest_light_far': 'animals/birds-forest_light_far.mp3',
-  crickets_far: 'animals/crickets_far.ogg',
-  'crickets-summer_far': 'animals/crickets-summer_far.ogg',
-  frogs_close: 'animals/frogs_close.ogg',
+  birds_far: 'animals/animals-birds-far-01.ogg',
+  'birds-forest_light_far': 'animals/animals-birds-forest-light-far-01.mp3',
+  crickets_far: 'animals/animals-crickets-far-01.ogg',
+  'crickets-summer_far': 'animals/animals-crickets-summer-far-01.ogg',
+  frogs_close: 'animals/animals-frogs-close-01.ogg',
+  'wind-light_birds_medium': 'animals/animals-wind-light-birds-medium-01.ogg',
+  cicada_heavy: 'animals/animals-cicada-heavy-01.ogg',
+  'wind-leaves_rustling-light_birds_light':
+    'animals/animals-wind-leaves-rustling-light-birds-light-01.ogg',
+  'wind-leaves_rustling-light_birds_light-2':
+    'animals/animals-wind-leaves-rustling-light-birds-light-02.ogg',
+  'wind-leaves_rustling-light_birds_light-3':
+    'animals/animals-wind-leaves-rustling-light-birds-light-03.ogg',
+  'wind-leaves_rustling-light_birds_medium':
+    'animals/animals-wind-leaves-rustling-light-birds-medium-01.ogg',
 
   // City
-  'cars-passing_low_far': 'city/cars-passing_low_far.mp3',
-  'cars-passing_medium_close': 'city/cars-passing_medium_close.mp3',
-  'chatter-footsteps_medium': 'city/chatter-footsteps_medium.mp3',
-  'church-bells_medium_far': 'city/church-bells_medium_far.mp3',
-  'rain-wind-city-traffic_medium_far': 'city/rain-wind-city-traffic_medium_far.mp3',
-  traffic_medium_close: 'city/traffic_medium_close.ogg',
-  traffic_medium_far: 'city/traffic_medium_far.ogg',
+  'cars-passing_low_far': 'city/city-cars-passing-low-far-01.mp3',
+  'cars-passing_medium_close': 'city/city-cars-passing-medium-close-01.mp3',
+  'chatter-footsteps_medium': 'city/city-chatter-footsteps-medium-01.mp3',
+  'church-bells_medium_far': 'city/city-church-bells-medium-far-01.mp3',
+  'rain-wind-city-traffic_medium_far': 'city/city-rain-wind-city-traffic-medium-far-01.mp3',
+  traffic_medium_close: 'city/city-traffic-medium-close-01.ogg',
+  traffic_medium_far: 'city/city-traffic-medium-far-01.ogg',
+  'plane_overhead-light': 'city/city-plane-overhead-light-01.ogg',
 
   // Thunder
-  thunder_light_far: 'thunder/thunder_light_far.ogg',
-  thunder_medium_close: 'thunder/thunder_medium_close.ogg',
+  thunder_light_far: 'thunder/thunder-light-far-01.ogg',
+  thunder_medium_close: 'thunder/thunder-medium-close-01.ogg',
 
   // Water
   'drops-bucket-collecting-drips_light_close':
-    'water/drops-bucket-collecting-drips_light_close.mp3',
-  rain_light: 'water/rain_light.ogg',
-  rain_medium: 'water/rain_medium.ogg',
-  stream_light_close: 'water/stream_light_close.ogg',
-  stream_medium: 'water/stream_medium.ogg',
-  waterfall_light: 'water/waterfall_light.ogg',
-  waterfall_medium: 'water/waterfall_medium.ogg',
-  waves_medium_close: 'water/waves_medium_close.ogg',
-  waves_medium_far: 'water/waves_medium_far.ogg',
-  waves_small_close: 'water/waves_small_close.ogg',
+    'water/water-drops-bucket-collecting-drips-light-close-01.mp3',
+  rain_light: 'water/water-rain-light-01.ogg',
+  rain_medium: 'water/water-rain-medium-01.ogg',
+  stream_light_close: 'water/water-stream-light-close-01.ogg',
+  stream_medium: 'water/water-stream-medium-01.ogg',
+  waterfall_light: 'water/water-waterfall-light-01.ogg',
+  waterfall_medium: 'water/water-waterfall-medium-01.ogg',
+  waves_medium_close: 'water/water-waves-medium-close-01.ogg',
+  waves_medium_close_2: 'water/water-waves-medium-close-02.ogg',
+  waves_medium_far: 'water/water-waves-medium-far-01.ogg',
+  waves_small_close: 'water/water-waves-small-close-01.ogg',
+  waves_light_close: 'water/water-waves-light-close-01.ogg',
+  waves_light_far: 'water/water-waves-light-far-01.ogg',
+  'wind-leaves_rustling-medium_rain_light':
+    'water/water-wind-leaves-rustling-medium-rain-light-01.ogg',
+  'wind-leaves_rustling-medium_rain_medium':
+    'water/water-wind-leaves-rustling-medium-rain-medium-01.ogg',
 
   // Wind
-  wind_autumn: 'wind/wind_autumn.ogg',
-  wind_coastal_birds: 'wind/wind_coastal_birds.ogg',
-  wind_coastal_medium_far: 'wind/wind_coastal_medium_far.ogg',
-  wind_field_strong: 'wind/wind_field_strong.ogg',
-  wind_forest_medium: 'wind/wind_forest_medium.ogg',
-  wind_grass_strong: 'wind/wind_grass_strong.ogg',
+  wind_autumn: 'wind/wind-autumn-01.ogg',
+  wind_coastal_birds: 'wind/wind-coastal-birds-01.ogg',
+  wind_coastal_medium_far: 'wind/wind-coastal-medium-far-01.ogg',
+  wind_field_strong: 'wind/wind-field-strong-01.ogg',
+  wind_forest_medium: 'wind/wind-forest-medium-01.ogg',
+  wind_grass_strong: 'wind/wind-grass-strong-01.ogg',
+  'wind-leaves_rustling-heavy': 'wind/wind-leaves-rustling-heavy-01.ogg',
+  'wind-leaves_rustling-heavy-2': 'wind/wind-leaves-rustling-heavy-02.ogg',
+  'wind-leaves_rustling-heavy-3': 'wind/wind-leaves-rustling-heavy-03.ogg',
+  'wind-leaves_rustling-heavy_storm': 'wind/wind-leaves-rustling-heavy-storm-01.ogg',
+  'wind-leaves_rustling-medium': 'wind/wind-leaves-rustling-medium-01.ogg',
 
   // Other
-  fan_close: 'other/fan_close.ogg',
-  windchimes_close: 'other/windchimes_close.ogg',
+  fan_close: 'other/other-fan-close-01.ogg',
+  windchimes_close: 'other/other-windchimes-close-01.ogg',
 };
 
 /**
@@ -310,3 +333,6 @@ export function getAllSoundIds(): string[] {
 export function soundExists(soundId: string): boolean {
   return soundId in SOUND_PATH_MAP;
 }
+
+
+

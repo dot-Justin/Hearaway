@@ -1,5 +1,5 @@
 /**
- * Reusable Framer Motion animation variants for Skypin
+ * Reusable Framer Motion animation variants for Hearaway
  *
  * Usage:
  * import { blurIn, blurOut } from '@/lib/animations';
@@ -15,7 +15,7 @@
 import { Variants, Easing } from "framer-motion";
 
 /**
- * Default easing curve for Skypin animations
+ * Default easing curve for Hearaway animations
  * Cubic bezier: ease-in-out with slight emphasis on deceleration
  */
 export const defaultEasing: Easing = [0.4, 0, 0.2, 1];

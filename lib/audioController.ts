@@ -1,5 +1,5 @@
 /**
- * High-level audio controller for Skypin soundscape.
+ * High-level audio controller for Hearaway soundscape.
  *
  * Bridges the gap between weather data and the audio system.
  * Provides a simple API for the UI layer to trigger soundscape changes.

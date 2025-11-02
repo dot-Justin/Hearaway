@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import SearchBar from "@/components/SearchBar";
 import WeatherDisplay from "@/components/WeatherDisplay";
 import BackgroundManager from "@/components/BackgroundManager";
-import StartAudioButton from "@/components/StartAudioButton";
+import AudioLaunchOverlay from "@/components/AudioLaunchOverlay";
 import AudioControls from "@/components/AudioControls";
 import { useAudio } from "@/components/AudioProvider";
 import { getWeather } from "@/lib/weather";
@@ -28,7 +28,7 @@ export default function Home() {
         weatherData.biome.coordinates.lat,
         weatherData.biome.coordinates.lon
       )
-    : "/images/backgrounds/field/field-day-1.jpg"; // Default fallback
+    : "/assets/backgrounds/field/field-day-1.jpg"; // Default fallback
 
   const handleSearch = async (query: string) => {
     setIsLoading(true);
@@ -55,7 +55,7 @@ export default function Home() {
   return (
     <>
       <BackgroundManager backgroundImage={backgroundImage} />
-      <StartAudioButton />
+      <AudioLaunchOverlay />
       <AudioControls />
 
       <main className="min-h-screen flex flex-col items-center justify-center p-8">
@@ -67,8 +67,8 @@ export default function Home() {
           initial="hidden"
           animate="visible"
         >
-          <h1 className="text-6xl md:text-7xl font-serif mb-4">Skypin</h1>
-          <p className="text-text-secondary dark:text-dark-text-secondary text-lg">Hear anywhere.</p>
+          <h1 className="text-6xl md:text-7xl font-serif mb-4">Hearaway</h1>
+          <p className="text-text-secondary dark:text-dark-text-secondary text-lg">The world, in sound.</p>
         </motion.div>
 
         {/* Search Bar */}
