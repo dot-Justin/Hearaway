@@ -51,21 +51,13 @@
   }
 }
 
-/* Film grain canvas styling */
+/* Film grain canvas base sizing */
 canvas[data-film-grain] {
-  position: fixed;
+  position: absolute;
   inset: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
-  z-index: -1;
-  mix-blend-mode: soft-light;
-  opacity: 0.25;
-}
-
-.dark canvas[data-film-grain] {
-  mix-blend-mode: screen;
-  opacity: 0.5;
 }
 
 @keyframes link-underline-in {
@@ -79,4 +71,24 @@ canvas[data-film-grain] {
     animation: none;
     transform: scaleX(1);
   }
+}
+
+.bg-overlay-light {
+  z-index: -2;
+  background: linear-gradient(
+    to bottom,
+    rgba(245, 252, 253, 0.25) 0%,
+    rgba(245, 252, 253, 0.45) 50%,
+    rgba(245, 252, 253, 0.5) 100%
+  );
+}
+
+.bg-overlay-dark {
+  z-index: -2;
+  background: linear-gradient(
+    to bottom,
+    rgba(7, 25, 29, 0.5) 0%,
+    rgba(7, 25, 29, 0.75) 50%,
+    rgba(7, 25, 29, 0.9) 100%
+  );
 }

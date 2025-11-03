@@ -113,19 +113,20 @@ export const blurInFast: Variants = {
     opacity: 0,
     filter: "blur(10px)",
   },
-  visible: {
+  visible: (delay: number = 0) => ({
     opacity: 1,
     filter: "blur(0px)",
     transition: {
-      duration: 0.3,
+      duration: 0.6,
       ease: defaultEasing,
+      delay,
     },
-  },
+  }),
   exit: {
     opacity: 0,
     filter: "blur(10px)",
     transition: {
-      duration: 0.3,
+      duration: 0.6,
       ease: defaultEasing,
     },
   },

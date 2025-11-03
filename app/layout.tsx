@@ -1,10 +1,53 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import { cookies } from "next/headers";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AudioProvider } from "@/components/AudioProvider";
 import ThemeToggle from "@/components/ThemeToggle";
-import FilmGrain from "@/components/FilmGrain";
+
+const THEME_STORAGE_KEY = "hearaway-theme";
+
+const themeInitializer = `
+(function() {
+  const storageKey = '${THEME_STORAGE_KEY}';
+  const classNameDark = 'dark';
+
+  function getCookie(name) {
+    const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+    return match ? decodeURIComponent(match[1]) : null;
+  }
+
+  try {
+    let theme = null;
+
+    try {
+      theme = window.localStorage.getItem(storageKey);
+    } catch (error) {
+      theme = null;
+    }
+
+    if (!theme) {
+      theme = getCookie(storageKey);
+    }
+
+    if (!theme) {
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      theme = prefersDark ? 'dark' : 'light';
+    }
+
+    if (theme === 'dark') {
+      document.documentElement.classList.add(classNameDark);
+    } else {
+      document.documentElement.classList.remove(classNameDark);
+    }
+
+    document.documentElement.dataset.theme = theme;
+  } catch (error) {
+    // Ignore theme initialization errors; server-rendered class remains.
+  }
+})();
+`;
 
 const gambarino = localFont({
   src: "../public/fonts/Gambarino-Regular.woff2",
@@ -73,39 +116,31 @@ export const metadata: Metadata = {
   description: "The world, in sound.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const themeCookie = cookieStore.get("hearaway-theme")?.value;
+  const initialTheme = themeCookie === "light" ? "light" : "dark";
+  const htmlClassName = initialTheme === "dark" ? "dark" : "";
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      className={htmlClassName}
+      data-theme={initialTheme}
+      suppressHydrationWarning
+    >
       <head>
         <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                function getCookie(name) {
-                  const value = \`; \${document.cookie}\`;
-                  const parts = value.split(\`; \${name}=\`);
-                  if (parts.length === 2) return parts.pop().split(';').shift();
-                }
-
-                const theme = getCookie('hearaway-theme');
-                // Default to dark mode if no cookie exists
-                if (theme === 'dark' || !theme) {
-                  document.documentElement.classList.add('dark');
-                } else {
-                  document.documentElement.classList.remove('dark');
-                }
-              })();
-            `,
-          }}
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{ __html: themeInitializer }}
         />
       </head>
-      <body className={`${gambarino.variable} ${articulat.variable} antialiased`} suppressHydrationWarning>
-        <FilmGrain />
-        <ThemeProvider>
+      <body className={`${gambarino.variable} ${articulat.variable} antialiased`}>
+        <ThemeProvider initialTheme={initialTheme}>
           <AudioProvider>
             <ThemeToggle />
             {children}

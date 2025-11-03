@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import SearchBar from "@/components/SearchBar";
@@ -8,16 +9,19 @@ import BackgroundManager from "@/components/BackgroundManager";
 import AudioLaunchOverlay from "@/components/AudioLaunchOverlay";
 import AudioControls from "@/components/AudioControls";
 import { useAudio } from "@/components/AudioProvider";
+import { useTheme } from "@/components/ThemeProvider";
 import { getWeather } from "@/lib/weather";
 import type { WeatherData } from "@/types/weather";
 import { getTimeOfDay, getBiomeImagePath } from "@/lib/biomeUtils";
-import { blurIn } from "@/lib/animations";
+import { blurIn, blurInSubtle } from "@/lib/animations";
 
 export default function Home() {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { updateSoundscape, isReady } = useAudio();
+  const { updateSoundscape, isReady, hasInteracted } = useAudio();
+  const { theme } = useTheme();
+  const [isBrandReady, setIsBrandReady] = useState(false);
 
   // Calculate background image based on biome, time of day, and location coordinates
   // Location coordinates ensure deterministic image selection - same location = same image
@@ -52,6 +56,10 @@ export default function Home() {
     }
   }, [weatherData, isReady, updateSoundscape]);
 
+  useEffect(() => {
+    setIsBrandReady(true);
+  }, []);
+
   return (
     <>
       <BackgroundManager backgroundImage={backgroundImage} />
@@ -60,36 +68,53 @@ export default function Home() {
 
       <main className="min-h-screen flex flex-col items-center justify-center p-8">
         <div className="w-full max-w-4xl space-y-12">
-        {/* App Header */}
-        <motion.div
-          className="text-center"
-          variants={blurIn}
-          initial="hidden"
-          animate="visible"
-        >
-          <h1 className="text-6xl md:text-7xl font-serif mb-4">Hearaway</h1>
-          <p className="text-text-secondary dark:text-dark-text-secondary text-lg">The world, in sound.</p>
-        </motion.div>
+          {/* App Header */}
+          <motion.div
+            className="flex flex-col items-center text-center"
+            variants={blurIn}
+            initial="hidden"
+            animate={hasInteracted ? "visible" : "hidden"}
+          >
+            <div className="flex flex-col items-center">
+              <h1 className="flex items-center justify-center">
+                {isBrandReady ? (
+                  <Image
+                    key={theme}
+                    src={
+                      theme === "dark"
+                        ? "/assets/brand/combination_mark_light.svg"
+                        : "/assets/brand/combination_mark_dark.svg"
+                    }
+                    alt="Hearaway Logo"
+                    width={420}
+                    // lol
+                    height={140}
+                    priority
+                  />
+                ) : (
+                  <span
+                    className="inline-block"
+                    style={{ width: 420, height: 140 }}
+                    aria-hidden="true"
+                  />
+                )}
+              </h1>
+              <p className="text-text-secondary dark:text-dark-text-secondary text-lg -mt-2">
+                The world, in sound.
+              </p>
+            </div>
+          </motion.div>
 
         {/* Search Bar */}
         <motion.div
           className="flex justify-center"
           variants={blurIn}
           initial="hidden"
-          animate="visible"
-          custom={0.5}
+          animate={hasInteracted ? "visible" : "hidden"}
+          custom={0.15}
         >
           <SearchBar onSearch={handleSearch} isLoading={isLoading} />
         </motion.div>
-
-        {/* Loading State */}
-        {isLoading && (
-          <div className="text-center">
-            <div className="inline-block animate-pulse text-text-secondary dark:text-dark-text-secondary">
-              Loading weather data...
-            </div>
-          </div>
-        )}
 
         {/* Error State */}
         {error && (
@@ -100,19 +125,21 @@ export default function Home() {
           </div>
         )}
 
-        {/* Weather Display */}
-        {weatherData && !isLoading && (
-          <div className="flex justify-center animate-in fade-in duration-500">
-            <WeatherDisplay data={weatherData} />
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!weatherData && !isLoading && !error && (
-          <div className="text-center text-text-secondary dark:text-dark-text-secondary">
-            <p></p>
-          </div>
-        )}
+        {/* Weather Display / Placeholder */}
+        <div className="flex justify-center min-h-[26rem] w-full">
+          {weatherData && !isLoading ? (
+            <motion.div
+              className="flex justify-center w-full"
+              variants={blurInSubtle}
+              initial="hidden"
+              animate="visible"
+            >
+              <WeatherDisplay data={weatherData} />
+            </motion.div>
+          ) : !error ? (
+            <div className="w-full max-w-2xl" aria-hidden="true" />
+          ) : null}
+        </div>
         </div>
       </main>
     </>

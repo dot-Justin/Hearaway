@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { motion } from "framer-motion";
 import { useAudio } from "./AudioProvider";
-import { blurIn } from "@/lib/animations";
+import { blurInFast, blurInSubtle } from "@/lib/animations";
 
 /**
  * AudioLaunchOverlay - onboarding gate for audio playback.
@@ -13,32 +13,71 @@ import { blurIn } from "@/lib/animations";
 export default function AudioLaunchOverlay() {
   const { initialize, isReady, isLoading, hasInteracted } = useAudio();
   const [error, setError] = useState<string | null>(null);
+  const [isBlurring, setIsBlurring] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    if ((hasInteracted || isReady) && !isBlurring) {
+      setDismissed(true);
+    }
+  }, [hasInteracted, isReady, isBlurring]);
 
   const handleStart = async () => {
     setError(null);
+    setIsBlurring(true);
     try {
       await initialize();
     } catch (err) {
       console.error("Failed to start audio:", err);
       setError("Failed to start audio. Please try again.");
+      setIsBlurring(false);
     }
   };
 
   // Don't render if user has already interacted
-  if (hasInteracted || isReady) {
+  if (dismissed) {
     return null;
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 dark:bg-dark-background/95 px-6">
+    <motion.div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 dark:bg-dark-background/95 px-6"
+      variants={{
+        resting: {
+          opacity: 1,
+          filter: "blur(0px)",
+          scale: 1,
+          transition: { duration: 0.35, ease: "easeOut" },
+        },
+        blurOut: {
+          opacity: 0,
+          filter: "blur(22px)",
+          scale: 1.05,
+          transition: { duration: 0.22, ease: "easeIn" },
+        },
+      }}
+      initial="resting"
+      animate={isBlurring ? "blurOut" : "resting"}
+      onAnimationComplete={() => {
+        if (isBlurring) {
+          setDismissed(true);
+        }
+      }}
+    >
       <div className="w-full max-w-xl text-center space-y-8">
         {/* Title */}
-        <div className="space-y-4">
+        <motion.div
+          className="space-y-4"
+          variants={blurInSubtle}
+          initial="hidden"
+          animate="visible"
+          custom={0}
+        >
           <h2 className="text-4xl md:text-5xl font-serif">
             Ready to listen?
           </h2>
           <p className="text-text-secondary dark:text-dark-text-secondary text-lg leading-relaxed">
-            Welcome to Hearaway MVP v1.0.1!<br />
+            Welcome to Hearaway MVP v1.0.2!<br />
             This is an early version, which means it's unfinished, probably
             buggy, and a little rough around the edges. If you spot anything odd
             or have suggestions, reach out on{" "}
@@ -63,21 +102,21 @@ export default function AudioLaunchOverlay() {
             </a>
             .
           </p>
-        </div>
+        </motion.div>
 
         {/* Start Button */}
         <motion.button
           onClick={handleStart}
           disabled={isLoading}
-          className="px-10 py-4 rounded-lg
+          className="px-10 py-4 rounded-3xl
                      bg-accent-secondary dark:bg-dark-accent-secondary
                      hover:bg-accent-primary dark:hover:bg-dark-accent-primary
                      text-text-primary dark:text-dark-text-primary
                      font-medium text-lg
                      disabled:opacity-50 disabled:cursor-not-allowed
                      transition-colors"
-          aria-label={isLoading ? "Loading audio..." : "Start soundscape"}
-          variants={blurIn}
+          aria-label={isLoading ? "Starting audio..." : "Start soundscape"}
+          variants={blurInFast}
           initial="hidden"
           animate="visible"
           custom={1}
@@ -104,7 +143,7 @@ export default function AudioLaunchOverlay() {
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 />
               </svg>
-              Loading sounds...
+              Starting audio...
             </span>
           ) : (
             "Understood"
@@ -121,6 +160,6 @@ export default function AudioLaunchOverlay() {
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import FilmGrain from "@/components/FilmGrain";
 import { backgroundCrossfade } from "@/lib/animations";
 
 interface BackgroundManagerProps {
@@ -36,17 +37,17 @@ export default function BackgroundManager({ backgroundImage }: BackgroundManager
   }
 
   return (
-    <>
+    <div className="pointer-events-none fixed inset-0 -z-10 isolate">
       <AnimatePresence mode="sync">
         {/* Old image layer - only rendered during transition, exits with blur+fade */}
         {previousImage && (
           <motion.div
             key={`old-${previousImage}`}
-            className="pointer-events-none fixed inset-0 bg-cover bg-center bg-no-repeat"
+            className="pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat"
             style={{
               backgroundImage: `url(${previousImage})`,
               backgroundAttachment: "fixed",
-              zIndex: -4,
+              zIndex: 0,
             }}
             variants={backgroundCrossfade}
             initial="visible"
@@ -58,11 +59,11 @@ export default function BackgroundManager({ backgroundImage }: BackgroundManager
         {/* New image layer - enters with deblur+fade (skips animation on initial mount) */}
         <motion.div
           key={`new-${displayedImage}`}
-          className="pointer-events-none fixed inset-0 bg-cover bg-center bg-no-repeat"
+          className="pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
             backgroundImage: `url(${displayedImage})`,
             backgroundAttachment: "fixed",
-            zIndex: -3, // Above old image, below gradient
+            zIndex: 1, // Above old image, below gradient
           }}
           variants={backgroundCrossfade}
           initial={isInitialMount.current ? "visible" : "hidden"}
@@ -70,23 +71,22 @@ export default function BackgroundManager({ backgroundImage }: BackgroundManager
         />
       </AnimatePresence>
 
-      {/* Gradient overlay (maintains readability) - sits above background, below film grain */}
+      {/* Gradient overlay (maintains readability) - sits above background */}
       {/* Light mode gradient */}
       <div
-        className="pointer-events-none fixed inset-0 bg-gradient-to-b dark:hidden"
-        style={{
-          zIndex: -2,
-          background: 'linear-gradient(to bottom, rgba(245, 252, 253, 0.25) 0%, rgba(245, 252, 253, 0.45) 50%, rgba(245, 252, 253, 0.5) 100%)',
-        }}
+        className="pointer-events-none absolute inset-0 bg-overlay-light dark:hidden"
+        suppressHydrationWarning
+        style={{ zIndex: 2 }}
       />
       {/* Dark mode gradient */}
       <div
-        className="pointer-events-none fixed inset-0 hidden bg-gradient-to-b dark:block"
-        style={{
-          zIndex: -2,
-          background: 'linear-gradient(to bottom, rgba(7, 25, 29, 0.5) 0%, rgba(7, 25, 29, 0.75) 50%, rgba(7, 25, 29, 0.9) 100%)',
-        }}
+        className="pointer-events-none absolute inset-0 hidden bg-overlay-dark dark:block"
+        suppressHydrationWarning
+        style={{ zIndex: 2 }}
       />
-    </>
+
+      {/* Film grain overlay constrained to background layers */}
+      <FilmGrain className="pointer-events-none absolute inset-0 z-10 opacity-20 dark:opacity-40" />
+    </div>
   );
 }

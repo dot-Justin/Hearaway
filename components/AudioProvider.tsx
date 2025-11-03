@@ -33,7 +33,7 @@ const AudioContext = createContext<AudioContextType | undefined>(undefined);
 export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [isReady, setIsReady] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [volume, setVolumeState] = useState(0.7); // Default 70% volume
+  const [volume, setVolumeState] = useState(0.9); // Default 90% volume
   const [isLoading, setIsLoading] = useState(false);
   const [currentBiome, setCurrentBiome] = useState<BiomeType | null>(null);
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -62,9 +62,6 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       try {
         // Initialize audio context
         await controller.initialize();
-
-        // Preload all audio files
-        await controller.preloadSounds();
 
         // Set initial volume
         controller.setMasterVolume(volume);

@@ -1,6 +1,13 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+} from "react";
 import Cookies from "js-cookie";
 
 type Theme = "light" | "dark";
@@ -12,41 +19,81 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  // Initialize from the HTML element's class (set by blocking script)
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window !== "undefined") {
-      return document.documentElement.classList.contains("dark") ? "dark" : "light";
-    }
-    return "dark"; // fallback for SSR
-  });
-  const [mounted, setMounted] = useState(false);
+interface ThemeProviderProps {
+  children: React.ReactNode;
+  initialTheme: Theme;
+}
 
-  // Mark as mounted and sync with cookie if needed
+const THEME_STORAGE_KEY = "hearaway-theme";
+
+function isTheme(value: unknown): value is Theme {
+  return value === "light" || value === "dark";
+}
+
+export function ThemeProvider({ children, initialTheme }: ThemeProviderProps) {
+  const [theme, setTheme] = useState<Theme>(initialTheme);
+  const hasSyncedInitialTheme = useRef(false);
+
+  // Sync local state with persisted theme on first mount
   useEffect(() => {
-    const savedTheme = Cookies.get("hearaway-theme") as Theme | undefined;
+    if (hasSyncedInitialTheme.current) {
+      return;
+    }
+    hasSyncedInitialTheme.current = true;
 
-    // If no cookie exists, set default to dark
-    if (!savedTheme) {
-      Cookies.set("hearaway-theme", "dark", { expires: 365 });
+    let storedTheme: Theme | null = null;
+    try {
+      const value = window.localStorage.getItem(THEME_STORAGE_KEY);
+      storedTheme = isTheme(value) ? value : null;
+    } catch (error) {
+      storedTheme = null;
     }
 
-    setMounted(true);
-  }, []);
+    const cookieValue = Cookies.get(THEME_STORAGE_KEY);
+    const cookieTheme = isTheme(cookieValue) ? cookieValue : null;
+    const domValue = document.documentElement.dataset.theme;
+    const domTheme = isTheme(domValue) ? domValue : null;
 
-  const toggleTheme = () => {
-    const newTheme = theme === "dark" ? "light" : "dark";
-    setTheme(newTheme);
-    Cookies.set("hearaway-theme", newTheme, { expires: 365 });
+    const nextTheme =
+      storedTheme || cookieTheme || domTheme || initialTheme;
 
-    // Apply theme class to document
+    if (!cookieTheme) {
+      Cookies.set(THEME_STORAGE_KEY, nextTheme, { expires: 365 });
+    }
+
+    if (!storedTheme) {
+      try {
+        window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+      } catch (error) {
+        // Ignore storage failures (e.g., private browsing)
+      }
+    }
+
+    setTheme(nextTheme);
+  }, [initialTheme]);
+
+  // Apply theme class and persist cookie whenever theme changes
+  useEffect(() => {
     const root = document.documentElement;
-    if (newTheme === "dark") {
+    if (theme === "dark") {
       root.classList.add("dark");
     } else {
       root.classList.remove("dark");
     }
-  };
+    root.dataset.theme = theme;
+
+    Cookies.set("hearaway-theme", theme, { expires: 365 });
+
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch (error) {
+      // Ignore storage failures
+    }
+  }, [theme]);
+
+  const toggleTheme = useCallback(() => {
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  }, []);
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>

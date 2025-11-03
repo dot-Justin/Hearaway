@@ -2,7 +2,11 @@
 
 import { useEffect, useRef } from "react";
 
-const FilmGrain = () => {
+interface FilmGrainProps {
+  className?: string;
+}
+
+const FilmGrain = ({ className }: FilmGrainProps) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -117,7 +121,7 @@ const FilmGrain = () => {
     };
   }, []);
 
-  return <canvas ref={canvasRef} data-film-grain="true" />;
+  return <canvas ref={canvasRef} data-film-grain="true" className={className} />;
 };
 
 export default FilmGrain;

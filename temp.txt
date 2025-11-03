@@ -1,0 +1,31 @@
+  };
+
+  useEffect(() => {
+    return () => {
+      randomTimeoutsRef.current.forEach((id) => clearTimeout(id));
+      randomTimeoutsRef.current = [];
+    };
+  }, []);
+
+  const inputVariants = {
+    resting: {
+      filter: "blur(0px)",
+      transition: { duration: 0.18 },
+    },
+    randomizing: {
+      filter: "blur(6px)",
+      transition: { duration: 0.12 },
+    },
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="w-full max-w-xl">
+      <div className="relative">
+        {/* Input */}
+        <motion.input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            if (error) setError("");
