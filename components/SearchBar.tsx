@@ -47,7 +47,7 @@ export default function SearchBar({
       setError("");
       return true;
     }
-    setError("Enter a valid US zip code or city name");
+    setError("Enter a valid US zip code or global city name.");
     return false;
   };
 
@@ -171,8 +171,8 @@ export default function SearchBar({
             isRandomizing
               ? "Choosing random location"
               : hasText
-              ? "Go"
-              : "Random location"
+                ? "Go"
+                : "Random location"
           }
           className={[
             "absolute right-1.5 top-1/2 -translate-y-1/2",

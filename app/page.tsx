@@ -30,7 +30,7 @@ export default function Home() {
         weatherData.biome.type,
         getTimeOfDay(weatherData.location.localtime),
         weatherData.biome.coordinates.lat,
-        weatherData.biome.coordinates.lon
+        weatherData.biome.coordinates.lon,
       )
     : "/assets/backgrounds/field/field-day-1.jpg"; // Default fallback
 
@@ -42,7 +42,9 @@ export default function Home() {
       const data = await getWeather(query);
       setWeatherData(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch weather data");
+      setError(
+        err instanceof Error ? err.message : "Failed to fetch weather data",
+      );
       setWeatherData(null);
     } finally {
       setIsLoading(false);
@@ -66,7 +68,7 @@ export default function Home() {
       <AudioLaunchOverlay />
       <AudioControls />
 
-      <main className="min-h-screen flex flex-col items-center justify-center p-8">
+      <main className="min-h-screen flex flex-col items-center justify-start pt-32 p-8">
         <div className="w-full max-w-4xl space-y-12">
           {/* App Header */}
           <motion.div
@@ -105,41 +107,41 @@ export default function Home() {
             </div>
           </motion.div>
 
-        {/* Search Bar */}
-        <motion.div
-          className="flex justify-center"
-          variants={blurIn}
-          initial="hidden"
-          animate={hasInteracted ? "visible" : "hidden"}
-          custom={0.15}
-        >
-          <SearchBar onSearch={handleSearch} isLoading={isLoading} />
-        </motion.div>
+          {/* Search Bar */}
+          <motion.div
+            className="flex justify-center"
+            variants={blurIn}
+            initial="hidden"
+            animate={hasInteracted ? "visible" : "hidden"}
+            custom={0.15}
+          >
+            <SearchBar onSearch={handleSearch} isLoading={isLoading} />
+          </motion.div>
 
-        {/* Error State */}
-        {error && (
-          <div className="text-center">
-            <div className="inline-block px-6 py-3 bg-warm/10 dark:bg-dark-warm/10 border border-warm/30 dark:border-dark-warm/30 rounded-lg">
-              <p className="text-warm dark:text-dark-warm">{error}</p>
+          {/* Error State */}
+          {error && (
+            <div className="text-center">
+              <div className="inline-block px-6 py-3 bg-warm/10 dark:bg-dark-warm/10 border border-warm/30 dark:border-dark-warm/30 rounded-lg">
+                <p className="text-warm dark:text-dark-warm">{error}</p>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Weather Display / Placeholder */}
-        <div className="flex justify-center min-h-[26rem] w-full">
-          {weatherData && !isLoading ? (
-            <motion.div
-              className="flex justify-center w-full"
-              variants={blurInSubtle}
-              initial="hidden"
-              animate="visible"
-            >
-              <WeatherDisplay data={weatherData} />
-            </motion.div>
-          ) : !error ? (
-            <div className="w-full max-w-2xl" aria-hidden="true" />
-          ) : null}
-        </div>
+          {/* Weather Display / Placeholder */}
+          <div className="flex justify-center min-h-[26rem] w-full">
+            {weatherData && !isLoading ? (
+              <motion.div
+                className="flex justify-center w-full"
+                variants={blurInSubtle}
+                initial="hidden"
+                animate="visible"
+              >
+                <WeatherDisplay data={weatherData} />
+              </motion.div>
+            ) : !error ? (
+              <div className="w-full max-w-2xl" aria-hidden="true" />
+            ) : null}
+          </div>
         </div>
       </main>
     </>

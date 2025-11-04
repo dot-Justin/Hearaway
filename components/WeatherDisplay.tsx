@@ -26,7 +26,8 @@ export default function WeatherDisplay({ data }: WeatherDisplayProps) {
             {location.name}
           </h1>
           <p className="text-text-secondary dark:text-dark-text-secondary text-lg">
-            {location.region && `${location.region}, `}{location.country} • {formatBiomeForDisplay(biome.type)}
+            {location.region && `${location.region}, `}
+            {location.country}
           </p>
         </div>
 
@@ -49,19 +50,31 @@ export default function WeatherDisplay({ data }: WeatherDisplayProps) {
         {/* Additional Details */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-8 border-t border-accent-secondary/20 dark:border-dark-accent-secondary/20">
           <div className="text-center">
-            <p className="text-text-secondary dark:text-dark-text-secondary text-sm mb-1">Feels Like</p>
-            <p className="text-xl font-medium">{Math.round(current.feelslike_f)}°F</p>
+            <p className="text-text-secondary dark:text-dark-text-secondary text-sm mb-1">
+              Feels Like
+            </p>
+            <p className="text-xl font-medium">
+              {Math.round(current.feelslike_f)}°F
+            </p>
           </div>
           <div className="text-center">
-            <p className="text-text-secondary dark:text-dark-text-secondary text-sm mb-1">Humidity</p>
+            <p className="text-text-secondary dark:text-dark-text-secondary text-sm mb-1">
+              Humidity
+            </p>
             <p className="text-xl font-medium">{current.humidity}%</p>
           </div>
           <div className="text-center">
-            <p className="text-text-secondary dark:text-dark-text-secondary text-sm mb-1">Wind</p>
-            <p className="text-xl font-medium">{Math.round(current.wind_mph)} mph</p>
+            <p className="text-text-secondary dark:text-dark-text-secondary text-sm mb-1">
+              Wind
+            </p>
+            <p className="text-xl font-medium">
+              {Math.round(current.wind_mph)} mph
+            </p>
           </div>
           <div className="text-center">
-            <p className="text-text-secondary dark:text-dark-text-secondary text-sm mb-1">Local Time</p>
+            <p className="text-text-secondary dark:text-dark-text-secondary text-sm mb-1">
+              Local Time
+            </p>
             <p className="text-xl font-medium">{localTime}</p>
           </div>
         </div>

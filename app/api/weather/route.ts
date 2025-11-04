@@ -22,13 +22,16 @@ export async function GET(request: NextRequest) {
   const query = searchParams.get("q");
 
   if (!query) {
-    return NextResponse.json({ error: "Query parameter is required" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Query parameter is required" },
+      { status: 400 },
+    );
   }
 
   try {
     // Step 1: Geocode the query to get coordinates
     const geocodingUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
-      query
+      query,
     )}&count=1&language=en&format=json`;
 
     const geocodingResponse = await fetch(geocodingUrl);
@@ -36,7 +39,7 @@ export async function GET(request: NextRequest) {
     if (!geocodingResponse.ok) {
       return NextResponse.json(
         { error: "Failed to geocode location" },
-        { status: geocodingResponse.status }
+        { status: geocodingResponse.status },
       );
     }
 
@@ -44,8 +47,11 @@ export async function GET(request: NextRequest) {
 
     if (!geocodingData.results || geocodingData.results.length === 0) {
       return NextResponse.json(
-        { error: "Location not found. Please try a different search term." },
-        { status: 404 }
+        {
+          error:
+            'Location not found. Search is a bit weird at the moment, try "Bristol" instead of "Bristol, UK" for example.',
+        },
+        { status: 404 },
       );
     }
 
@@ -62,7 +68,7 @@ export async function GET(request: NextRequest) {
     if (!weatherResponse.ok) {
       return NextResponse.json(
         { error: "Failed to fetch weather data" },
-        { status: weatherResponse.status }
+        { status: weatherResponse.status },
       );
     }
 
@@ -78,7 +84,9 @@ export async function GET(request: NextRequest) {
       },
       current: {
         temp_c: Math.round(weatherData.current.temperature_2m),
-        temp_f: Math.round(celsiusToFahrenheit(weatherData.current.temperature_2m)),
+        temp_f: Math.round(
+          celsiusToFahrenheit(weatherData.current.temperature_2m),
+        ),
         condition: {
           text: getWeatherDescription(weatherData.current.weather_code),
           code: weatherData.current.weather_code,
@@ -88,7 +96,9 @@ export async function GET(request: NextRequest) {
         wind_dir: weatherData.current.wind_direction_10m,
         humidity: weatherData.current.relative_humidity_2m,
         feelslike_c: Math.round(weatherData.current.apparent_temperature),
-        feelslike_f: Math.round(celsiusToFahrenheit(weatherData.current.apparent_temperature)),
+        feelslike_f: Math.round(
+          celsiusToFahrenheit(weatherData.current.apparent_temperature),
+        ),
       },
       biome: {
         type: biome,
@@ -104,7 +114,7 @@ export async function GET(request: NextRequest) {
     console.error("Open-Meteo API error:", error);
     return NextResponse.json(
       { error: "Failed to fetch weather data" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
