@@ -30,8 +30,11 @@ export async function GET(request: NextRequest) {
 
   try {
     // Step 1: Geocode the query to get coordinates
+    // Robustness: take the first part of a comma-separated query
+    const locationQuery = query.split(",")[0];
+
     const geocodingUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
-      query,
+      locationQuery,
     )}&count=1&language=en&format=json`;
 
     const geocodingResponse = await fetch(geocodingUrl);
@@ -48,8 +51,7 @@ export async function GET(request: NextRequest) {
     if (!geocodingData.results || geocodingData.results.length === 0) {
       return NextResponse.json(
         {
-          error:
-            'Location not found. Search is a bit weird at the moment, try "Bristol" instead of "Bristol, UK" for example.',
+          error: "Location not found. City names work best.",
         },
         { status: 404 },
       );

@@ -39,15 +39,15 @@ export default function SearchBar({
   const isBusy = isLoading || isRandomizing;
   const iconType = isLoading ? "spinner" : hasText ? "go" : "random";
 
-  // Keep your validator. If you want global support later, rip this out.
   const validateInput = (value: string): boolean => {
     const zipRegex = /^\d{5}$/;
-    const cityRegex = /^[a-zA-Z\s]{2,}$/;
+    // A more permissive regex for city names to support international locations
+    const cityRegex = /^[a-zA-Z0-9\s,.'-]{2,}$/;
     if (zipRegex.test(value) || cityRegex.test(value)) {
       setError("");
       return true;
     }
-    setError("Enter a valid US zip code or global city name.");
+    setError("Please enter a valid location.");
     return false;
   };
 

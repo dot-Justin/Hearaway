@@ -82,7 +82,7 @@ export default function AudioControls() {
             initial="hidden"
             animate="visible"
           >
-            <AnimatePresence mode="wait" initial={false}>
+            <AnimatePresence mode="sync" initial={false}>
               {isMuted ? (
                 <motion.span
                   key="play"
@@ -90,7 +90,7 @@ export default function AudioControls() {
                   initial="hidden"
                   animate="visible"
                   exit="exit"
-                  className="block"
+                  className="absolute inset-0 grid place-items-center"
                 >
                   <PlayIcon className="w-4 h-4" />
                 </motion.span>
@@ -101,7 +101,7 @@ export default function AudioControls() {
                   initial="hidden"
                   animate="visible"
                   exit="exit"
-                  className="block"
+                  className="absolute inset-0 grid place-items-center"
                 >
                   <PauseIcon className="w-4 h-4" />
                 </motion.span>
