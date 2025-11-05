@@ -28,6 +28,7 @@ export class AudioManager {
   // Web Audio API core
   private audioContext: AudioContext | null = null;
   private masterGainNode: GainNode | null = null;
+  private lowpassFilterNode: BiquadFilterNode | null = null;
   private compressorNode: DynamicsCompressorNode | null = null;
 
   // Track management
@@ -38,6 +39,8 @@ export class AudioManager {
   // State
   private isMuted = false;
   private masterVolume = 1.0;
+  private isInsideMode = false;
+  private insideFilterFrequency = 600;
   private isInitialized = false;
   private preloadComplete = false;
   private failedLoads: string[] = [];
@@ -135,8 +138,15 @@ export class AudioManager {
       this.masterGainNode = this.audioContext.createGain();
       this.masterGainNode.gain.value = this.masterVolume;
 
-      // Audio chain: individual track gains → master gain → compressor → destination
-      this.masterGainNode.connect(this.compressorNode);
+      // Create low-pass filter for inside mode effect
+      this.lowpassFilterNode = this.audioContext.createBiquadFilter();
+      this.lowpassFilterNode.type = 'lowpass';
+      this.lowpassFilterNode.frequency.value = this.isInsideMode ? this.insideFilterFrequency : 20000;
+      this.lowpassFilterNode.Q.value = 0.7;
+
+      // Audio chain: individual track gains → master gain → lowpass filter → compressor → destination
+      this.masterGainNode.connect(this.lowpassFilterNode);
+      this.lowpassFilterNode.connect(this.compressorNode);
       this.compressorNode.connect(this.audioContext.destination);
 
       // Resume context if suspended (autoplay policy)
@@ -606,6 +616,49 @@ export class AudioManager {
   }
 
   /**
+   * Set inside mode (muffled audio effect via low-pass filter).
+   *
+   * @param isInside - True to enable inside mode, false for outside mode
+   * @param transitionDuration - Fade duration in seconds (200ms default)
+   *
+   * @example
+   * audioManager.setInsideMode(true, 0.2);  // Enable muffling over 200ms
+   */
+  setInsideMode(isInside: boolean, transitionDuration = 0.2): void {
+    if (!this.audioContext || !this.lowpassFilterNode) return;
+
+    this.isInsideMode = isInside;
+    const targetFrequency = isInside ? this.insideFilterFrequency : 20000;
+    const now = this.audioContext.currentTime;
+    const start = now + 0.01;
+    const end = start + transitionDuration;
+
+    // Cancel any scheduled changes
+    this.lowpassFilterNode.frequency.cancelScheduledValues(now);
+
+    // Smooth transition using exponential ramp
+    this.lowpassFilterNode.frequency.setValueAtTime(this.lowpassFilterNode.frequency.value, start);
+    this.lowpassFilterNode.frequency.exponentialRampToValueAtTime(targetFrequency, end);
+  }
+
+  /**
+   * Set the filter frequency for inside mode.
+   *
+   * @param frequency - Filter frequency in Hz (200-2000 range recommended)
+   *
+   * @example
+   * audioManager.setInsideFilterFrequency(800);  // More muffled
+   */
+  setInsideFilterFrequency(frequency: number): void {
+    this.insideFilterFrequency = Math.max(200, Math.min(2000, frequency));
+
+    // If inside mode is active, update filter immediately
+    if (this.isInsideMode && this.lowpassFilterNode) {
+      this.lowpassFilterNode.frequency.setValueAtTime(this.insideFilterFrequency, this.audioContext?.currentTime || 0);
+    }
+  }
+
+  /**
    * Apply exponential volume fade to a gain node.
    *
    * Exponential curves sound more natural than linear to human ears.
@@ -723,6 +776,7 @@ export class AudioManager {
     // Clear references
     this.audioContext = null;
     this.masterGainNode = null;
+    this.lowpassFilterNode = null;
     this.activeTracks.clear();
     this.audioBuffers.clear();
     this.isInitialized = false;

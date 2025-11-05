@@ -133,4 +133,10 @@ export interface AudioSystemState {
 
   /** List of sound IDs that failed to load */
   failedLoads: string[];
+
+  /** Whether inside mode (muffled audio) is enabled */
+  insideMode?: boolean;
+
+  /** Low-pass filter frequency for inside mode in Hz */
+  insideFilterFrequency?: number;
 }

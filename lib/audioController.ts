@@ -342,6 +342,30 @@ export class AudioController {
   }
 
   /**
+   * Set inside mode (muffled audio effect).
+   *
+   * @param isInside - True for muffled (inside), false for clear (outside)
+   *
+   * @example
+   * controller.setInsideMode(true);  // Enable muffling
+   */
+  setInsideMode(isInside: boolean): void {
+    this.audioManager.setInsideMode(isInside, 0.2);  // 200ms transition
+  }
+
+  /**
+   * Set the filter frequency for inside mode muffling.
+   *
+   * @param frequency - Filter frequency in Hz (200-2000 range recommended)
+   *
+   * @example
+   * controller.setInsideFilterFrequency(800);  // Adjust muffling strength
+   */
+  setInsideFilterFrequency(frequency: number): void {
+    this.audioManager.setInsideFilterFrequency(frequency);
+  }
+
+  /**
    * Clean up audio resources.
    *
    * Call when the audio system is no longer needed.

@@ -8,6 +8,7 @@ import WeatherDisplay from "@/components/WeatherDisplay";
 import BackgroundManager from "@/components/BackgroundManager";
 import AudioLaunchOverlay from "@/components/AudioLaunchOverlay";
 import AudioControls from "@/components/AudioControls";
+import InsideModeToggle from "@/components/InsideModeToggle";
 import { useAudio } from "@/components/AudioProvider";
 import { useTheme } from "@/components/ThemeProvider";
 import { getWeather, getWeatherByCoordinates } from "@/lib/weather";
@@ -106,6 +107,7 @@ export default function Home() {
       <BackgroundManager backgroundImage={backgroundImage} />
       <AudioLaunchOverlay />
       <AudioControls />
+      <InsideModeToggle />
 
       <main className="min-h-screen flex flex-col items-center justify-start pt-32 p-8">
         <div className="w-full max-w-4xl space-y-12">
