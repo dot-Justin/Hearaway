@@ -45,7 +45,7 @@ export function ThemeProvider({ children, initialTheme }: ThemeProviderProps) {
     try {
       const value = window.localStorage.getItem(THEME_STORAGE_KEY);
       storedTheme = isTheme(value) ? value : null;
-    } catch (error) {
+    } catch {
       storedTheme = null;
     }
 
@@ -64,7 +64,7 @@ export function ThemeProvider({ children, initialTheme }: ThemeProviderProps) {
     if (!storedTheme) {
       try {
         window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
-      } catch (error) {
+      } catch {
         // Ignore storage failures (e.g., private browsing)
       }
     }
@@ -86,7 +86,7 @@ export function ThemeProvider({ children, initialTheme }: ThemeProviderProps) {
 
     try {
       window.localStorage.setItem(THEME_STORAGE_KEY, theme);
-    } catch (error) {
+    } catch {
       // Ignore storage failures
     }
   }, [theme]);

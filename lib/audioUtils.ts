@@ -17,9 +17,7 @@ import type { WeatherIntensity } from '@/types/audio';
 const SOUND_PATH_MAP: Record<string, string> = {
   // Animals
   birds_far: 'animals/animals-birds-far-01.ogg',
-  'birds-forest_light_far': 'animals/animals-birds-forest-light-far-01.mp3',
-  crickets_far: 'animals/animals-crickets-far-01.ogg',
-  'crickets-summer_far': 'animals/animals-crickets-summer-far-01.ogg',
+  'birds-forest_light_far': 'animals/animals-birds-forest-light-far-01.ogg',
   frogs_close: 'animals/animals-frogs-close-01.ogg',
   'wind-light_birds_medium': 'animals/animals-wind-light-birds-medium-01.ogg',
   cicada_heavy: 'animals/animals-cicada-heavy-01.ogg',
@@ -33,34 +31,42 @@ const SOUND_PATH_MAP: Record<string, string> = {
     'animals/animals-wind-leaves-rustling-light-birds-medium-01.ogg',
 
   // City
-  'cars-passing_low_far': 'city/city-cars-passing-low-far-01.mp3',
-  'cars-passing_medium_close': 'city/city-cars-passing-medium-close-01.mp3',
-  'chatter-footsteps_medium': 'city/city-chatter-footsteps-medium-01.mp3',
-  'church-bells_medium_far': 'city/city-church-bells-medium-far-01.mp3',
-  'rain-wind-city-traffic_medium_far': 'city/city-rain-wind-city-traffic-medium-far-01.mp3',
+  'cars-passing_low_far': 'city/city-cars-passing-low-far-01.ogg',
+  'cars-passing_medium_close': 'city/city-cars-passing-medium-close-01.ogg',
+  'chatter-footsteps_medium': 'city/city-chatter-footsteps-medium-01.ogg',
+  'church-bells_medium_far': 'city/city-church-bells-medium-far-01.ogg',
+  'rain-wind-city-traffic_medium_far': 'city/city-rain-wind-city-traffic-medium-far-01.ogg',
   traffic_medium_close: 'city/city-traffic-medium-close-01.ogg',
   traffic_medium_far: 'city/city-traffic-medium-far-01.ogg',
   'plane_overhead-light': 'city/city-plane-overhead-light-01.ogg',
 
+  // Desert
+  'desert-wind_light': 'desert/desert-wind-light-01.ogg',
+  'desert-cricket_heavy_close': 'desert/desert-cricket-heavy-close.ogg',
+  'desert-birds_bugs_light': 'desert/desert-birds-medium-bugs-light.ogg',
+
   // Thunder
   thunder_light_far: 'thunder/thunder-light-far-01.ogg',
   thunder_medium_close: 'thunder/thunder-medium-close-01.ogg',
+  thunder_light_far_rain_medium: 'thunder/thunder-light-far-rain-medium-01.ogg',
+  thunder_rolling_light_far: 'thunder/thunder-rolling-light-far-rain-light-01.ogg',
 
   // Water
   'drops-bucket-collecting-drips_light_close':
-    'water/water-drops-bucket-collecting-drips-light-close-01.mp3',
+    'water/water-drops-bucket-collecting-drips-light-close-01.ogg',
   rain_light: 'water/water-rain-light-01.ogg',
   rain_medium: 'water/water-rain-medium-01.ogg',
+  rain_medium_close: 'water/water-rain-medium-close-01.ogg',
   stream_light_close: 'water/water-stream-light-close-01.ogg',
   stream_medium: 'water/water-stream-medium-01.ogg',
   waterfall_light: 'water/water-waterfall-light-01.ogg',
   waterfall_medium: 'water/water-waterfall-medium-01.ogg',
+  waves_light_close: 'water/water-waves-light-close-01.ogg',
+  waves_light_far: 'water/water-waves-light-far-01.ogg',
   waves_medium_close: 'water/water-waves-medium-close-01.ogg',
   waves_medium_close_2: 'water/water-waves-medium-close-02.ogg',
   waves_medium_far: 'water/water-waves-medium-far-01.ogg',
   waves_small_close: 'water/water-waves-small-close-01.ogg',
-  waves_light_close: 'water/water-waves-light-close-01.ogg',
-  waves_light_far: 'water/water-waves-light-far-01.ogg',
   'wind-leaves_rustling-medium_rain_light':
     'water/water-wind-leaves-rustling-medium-rain-light-01.ogg',
   'wind-leaves_rustling-medium_rain_medium':
@@ -83,7 +89,6 @@ const SOUND_PATH_MAP: Record<string, string> = {
   fan_close: 'other/other-fan-close-01.ogg',
   windchimes_close: 'other/other-windchimes-close-01.ogg',
 };
-
 /**
  * Gets the full audio file path for a sound ID.
  *

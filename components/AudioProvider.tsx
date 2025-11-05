@@ -128,9 +128,10 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
   // Cleanup on unmount
   useEffect(() => {
+    const controller = controllerRef.current;
+
     return () => {
-      if (isReady) {
-        const controller = controllerRef.current;
+      if (isReady && controller) {
         controller.stopSoundscape(2); // Gentle fade out
       }
     };

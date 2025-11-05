@@ -19,10 +19,10 @@ import type { WeatherData } from '@/types/weather';
 export async function testAudioSystem(): Promise<{
   success: boolean;
   errors: string[];
-  results: Record<string, any>;
+  results: Record<string, unknown>;
 }> {
   const errors: string[] = [];
-  const results: Record<string, any> = {};
+  const results: Record<string, unknown> = {};
   const controller = getAudioController();
 
   try {

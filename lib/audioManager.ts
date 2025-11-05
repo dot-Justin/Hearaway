@@ -15,12 +15,8 @@
  * - Error resilient: Handle autoplay restrictions and missing files gracefully
  */
 
-import type { AudioTrack, PlayOptions, AudioSystemState } from '@/types/audio';
-import {
-  getAudioPath,
-  getAudioPathVariants,
-  calculateFadeDuration,
-} from './audioUtils';
+import type { AudioTrack, PlayOptions, AudioSystemState } from "@/types/audio";
+import { getAudioPathVariants, calculateFadeDuration } from "./audioUtils";
 
 /**
  * AudioManager - Web Audio API-based sound engine.
@@ -61,18 +57,29 @@ export class AudioManager {
    */
   async init(): Promise<void> {
     if (this.isInitialized) {
-      console.warn('AudioManager already initialized');
+      console.warn("AudioManager already initialized");
       return;
     }
 
     // Check for Web Audio API support
-    if (!('AudioContext' in window) && !('webkitAudioContext' in window)) {
-      throw new Error('Web Audio API not supported in this browser');
+    if (!("AudioContext" in window) && !("webkitAudioContext" in window)) {
+      throw new Error("Web Audio API not supported in this browser");
     }
 
     try {
       // Create audio context (use webkit prefix for older Safari)
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioContextClass =
+        window.AudioContext ??
+        (
+          window as typeof window & {
+            webkitAudioContext?: typeof AudioContext;
+          }
+        ).webkitAudioContext;
+
+      if (!AudioContextClass) {
+        throw new Error("Web Audio API not supported in this browser");
+      }
+
       this.audioContext = new AudioContextClass();
 
       // Create dynamics compressor to prevent clipping and control max volume
@@ -100,15 +107,15 @@ export class AudioManager {
       this.compressorNode.connect(this.audioContext.destination);
 
       // Resume context if suspended (autoplay policy)
-      if (this.audioContext.state === 'suspended') {
+      if (this.audioContext.state === "suspended") {
         await this.audioContext.resume();
       }
 
       this.isInitialized = true;
-      console.log('AudioManager initialized successfully');
+      console.log("AudioManager initialized successfully");
     } catch (error) {
-      console.error('Failed to initialize AudioManager:', error);
-      throw new Error('Failed to initialize audio system');
+      console.error("Failed to initialize AudioManager:", error);
+      throw new Error("Failed to initialize audio system");
     }
   }
 
@@ -126,25 +133,27 @@ export class AudioManager {
    */
   async preloadSounds(soundIds: string[]): Promise<void> {
     if (!this.audioContext) {
-      throw new Error('AudioManager not initialized. Call init() first.');
+      throw new Error("AudioManager not initialized. Call init() first.");
     }
 
     console.log(`Preloading ${soundIds.length} audio files...`);
     const startTime = Date.now();
 
     // Load all sounds in parallel
-    const loadPromises = soundIds.map((soundId) => this.loadAudioBuffer(soundId));
+    const loadPromises = soundIds.map((soundId) =>
+      this.loadAudioBuffer(soundId),
+    );
     await Promise.allSettled(loadPromises);
 
     const duration = Date.now() - startTime;
     const successCount = soundIds.length - this.failedLoads.length;
 
     console.log(
-      `Preloaded ${successCount}/${soundIds.length} audio files in ${duration}ms`
+      `Preloaded ${successCount}/${soundIds.length} audio files in ${duration}ms`,
     );
 
     if (this.failedLoads.length > 0) {
-      console.warn('Failed to load sounds:', this.failedLoads);
+      console.warn("Failed to load sounds:", this.failedLoads);
     }
 
     this.preloadComplete = true;
@@ -161,7 +170,7 @@ export class AudioManager {
    */
   private async loadAudioBuffer(soundId: string): Promise<AudioBuffer | null> {
     if (!this.audioContext) {
-      throw new Error('AudioContext not initialized');
+      throw new Error("AudioContext not initialized");
     }
 
     // Check if already loaded
@@ -178,11 +187,12 @@ export class AudioManager {
         if (!response.ok) continue;
 
         const arrayBuffer = await response.arrayBuffer();
-        const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+        const audioBuffer =
+          await this.audioContext.decodeAudioData(arrayBuffer);
 
         this.audioBuffers.set(soundId, audioBuffer);
         return audioBuffer;
-      } catch (error) {
+      } catch {
         // Try next format
         continue;
       }
@@ -213,7 +223,7 @@ export class AudioManager {
    */
   play(soundId: string, options: PlayOptions): void {
     if (!this.audioContext || !this.masterGainNode) {
-      console.error('AudioManager not initialized');
+      console.error("AudioManager not initialized");
       return;
     }
 
@@ -257,12 +267,20 @@ export class AudioManager {
 
     // Start playback with optional delay (minimum 0.02s for Web Audio API stability)
     const minDelay = 0.02;
-    const startTime = this.audioContext.currentTime + Math.max(minDelay, options.startDelay || 0);
+    const startTime =
+      this.audioContext.currentTime +
+      Math.max(minDelay, options.startDelay || 0);
     source.start(startTime);
 
     // Apply fade-in if requested
     if (options.fadeInDuration && options.fadeInDuration > 0) {
-      this.fadeVolume(gainNode, 0, options.volume, options.fadeInDuration, startTime);
+      this.fadeVolume(
+        gainNode,
+        0,
+        options.volume,
+        options.fadeInDuration,
+        startTime,
+      );
     }
 
     // Store track info
@@ -272,7 +290,7 @@ export class AudioManager {
       gainNode,
       volume: options.volume,
       isLooping: options.loop,
-      category: options.category || 'base',
+      category: options.category || "base",
       startTime: startTime,
       duration: buffer.duration,
       isFadingOut: false,
@@ -316,12 +334,13 @@ export class AudioManager {
 
     // Calculate when to start the crossfade (12.5% of track length, 2-30 seconds)
     const fadeDuration = calculateFadeDuration(track.duration);
-    const timeUntilCrossfade = Math.max(0, track.duration - fadeDuration) * 1000;
+    const timeUntilCrossfade =
+      Math.max(0, track.duration - fadeDuration) * 1000;
 
     console.log(
       `Scheduling loop crossfade for ${soundId}: ${fadeDuration.toFixed(1)}s fade after ${(
         timeUntilCrossfade / 1000
-      ).toFixed(1)}s`
+      ).toFixed(1)}s`,
     );
 
     // Schedule the crossfade
@@ -337,18 +356,26 @@ export class AudioManager {
       // This creates symmetrical crossfade that hides any loop point mismatches
 
       // Fade out current iteration
-      this.fadeVolume(currentTrack.gainNode, currentTrack.volume, 0, fadeDuration);
+      this.fadeVolume(
+        currentTrack.gainNode,
+        currentTrack.volume,
+        0,
+        fadeDuration,
+      );
 
       // Schedule cleanup of old track after fade completes
-      setTimeout(() => {
-        if (currentTrack.source) {
-          try {
-            currentTrack.source.stop();
-          } catch (e) {
-            // Source might already be stopped
+      setTimeout(
+        () => {
+          if (currentTrack.source) {
+            try {
+              currentTrack.source.stop();
+            } catch {
+              // Source might already be stopped
+            }
           }
-        }
-      }, fadeDuration * 1000 + 100);
+        },
+        fadeDuration * 1000 + 100,
+      );
 
       // Remove from active tracks immediately so play() can create new one
       this.activeTracks.delete(soundId);
@@ -431,7 +458,12 @@ export class AudioManager {
     const clampedVolume = Math.max(0, Math.min(1, volume));
 
     if (fadeDuration > 0) {
-      this.fadeVolume(track.gainNode, track.volume, clampedVolume, fadeDuration);
+      this.fadeVolume(
+        track.gainNode,
+        track.volume,
+        clampedVolume,
+        fadeDuration,
+      );
     } else {
       track.gainNode.gain.value = clampedVolume;
     }
@@ -488,7 +520,7 @@ export class AudioManager {
     startVolume: number,
     endVolume: number,
     duration: number,
-    startTime?: number
+    startTime?: number,
   ): void {
     if (!this.audioContext) return;
 
@@ -583,7 +615,7 @@ export class AudioManager {
     this.loopTimeouts.clear();
 
     // Close audio context
-    if (this.audioContext && this.audioContext.state !== 'closed') {
+    if (this.audioContext && this.audioContext.state !== "closed") {
       this.audioContext.close();
     }
 

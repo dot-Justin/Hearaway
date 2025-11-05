@@ -20,50 +20,80 @@ function kmhToMph(kmh: number): number {
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const query = searchParams.get("q");
+  const latParam = searchParams.get("lat");
+  const lonParam = searchParams.get("lon");
+  const hasCoordinates = latParam !== null && lonParam !== null;
 
-  if (!query) {
+  if (!query && !hasCoordinates) {
     return NextResponse.json(
-      { error: "Query parameter is required" },
+      { error: "Query parameter or coordinates are required" },
       { status: 400 },
     );
   }
 
   try {
-    // Step 1: Geocode the query to get coordinates
-    // Robustness: take the first part of a comma-separated query
-    const locationQuery = query.split(",")[0];
+    let latitude: number;
+    let longitude: number;
+    let locationName = "";
+    let regionName = "";
+    let countryName = "";
 
-    const geocodingUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
-      locationQuery,
-    )}&count=1&language=en&format=json`;
+    if (hasCoordinates) {
+      latitude = Number.parseFloat(latParam!);
+      longitude = Number.parseFloat(lonParam!);
 
-    const geocodingResponse = await fetch(geocodingUrl);
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+        return NextResponse.json(
+          { error: "Invalid latitude or longitude" },
+          { status: 400 },
+        );
+      }
 
-    if (!geocodingResponse.ok) {
-      return NextResponse.json(
-        { error: "Failed to geocode location" },
-        { status: geocodingResponse.status },
-      );
+      locationName = searchParams.get("name") ?? "";
+      regionName = searchParams.get("region") ?? "";
+      countryName = searchParams.get("country") ?? "";
+    } else {
+      // Step 1: Geocode the query to get coordinates
+      // Robustness: take the first part of a comma-separated query
+      const locationQuery = query!.split(",")[0];
+
+      const geocodingUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
+        locationQuery,
+      )}&count=1&language=en&format=json`;
+
+      const geocodingResponse = await fetch(geocodingUrl);
+
+      if (!geocodingResponse.ok) {
+        return NextResponse.json(
+          { error: "Failed to geocode location" },
+          { status: geocodingResponse.status },
+        );
+      }
+
+      const geocodingData: GeocodingResponse = await geocodingResponse.json();
+
+      if (!geocodingData.results || geocodingData.results.length === 0) {
+        return NextResponse.json(
+          {
+            error: "Location not found. City names work best.",
+          },
+          { status: 404 },
+        );
+      }
+
+      const location = geocodingData.results[0];
+      latitude = location.latitude;
+      longitude = location.longitude;
+      locationName = location.name;
+      regionName = location.admin1 || "";
+      countryName = location.country;
     }
 
-    const geocodingData: GeocodingResponse = await geocodingResponse.json();
-
-    if (!geocodingData.results || geocodingData.results.length === 0) {
-      return NextResponse.json(
-        {
-          error: "Location not found. City names work best.",
-        },
-        { status: 404 },
-      );
-    }
-
-    const location = geocodingData.results[0];
-
-    // Step 2: Detect biome for the location using MODIS satellite data grid
-    const biome = getBiome(location.latitude, location.longitude);
+    // Detect biome for the location using MODIS satellite data grid
+    const biome = getBiome(latitude, longitude);
 
     // Step 3: Fetch weather data for the coordinates
-    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${location.latitude}&longitude=${location.longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m&temperature_unit=celsius&wind_speed_unit=kmh&timezone=auto`;
+    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m&temperature_unit=celsius&wind_speed_unit=kmh&timezone=auto`;
 
     const weatherResponse = await fetch(weatherUrl);
 
@@ -79,9 +109,9 @@ export async function GET(request: NextRequest) {
     // Step 4: Transform to our unified WeatherData format
     const transformedData: WeatherData = {
       location: {
-        name: location.name,
-        region: location.admin1 || "",
-        country: location.country,
+        name: locationName,
+        region: regionName,
+        country: countryName,
         localtime: weatherData.current.time,
       },
       current: {
@@ -105,8 +135,8 @@ export async function GET(request: NextRequest) {
       biome: {
         type: biome,
         coordinates: {
-          lat: location.latitude,
-          lon: location.longitude,
+          lat: latitude,
+          lon: longitude,
         },
       },
     };

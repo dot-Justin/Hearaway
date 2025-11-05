@@ -9,10 +9,7 @@
 import type { BiomeType } from './biomeDetector';
 import type { TimeOfDay } from './biomeUtils';
 import type { SoundLayer } from '@/types/audio';
-import {
-  mapWeatherToIntensity,
-  calculateWindVolume,
-} from './audioUtils';
+import { mapWeatherToIntensity, calculateWindVolume } from './audioUtils';
 
 /**
  * Probability of including bird sounds (30% chance).
@@ -77,11 +74,11 @@ function shouldIncludeFrogs(): boolean {
  * @returns Array of sound layers to play simultaneously
  *
  * @example
- * getSoundLayers("forest", "evening", 0, 15, 65)
+ * getSoundLayers('forest', 'evening', 0, 15, 65)
  * // Returns: [
- * //   { soundId: "birds-forest_light_far", volume: 0.6, category: "base", ... }, // (30% chance)
- * //   { soundId: "wind_forest_medium", volume: 0.4, category: "base", ... },
- * //   { soundId: "crickets_far", volume: 0.7, category: "accent", ... }
+ * //   { soundId: 'birds-forest_light_far', volume: 0.6, category: 'base', ... }, // (30% chance)
+ * //   { soundId: 'wind_forest_medium', volume: 0.4, category: 'base', ... },
+ * //   { soundId: 'cicada_heavy', volume: 0.7, category: 'accent', ... }
  * // ]
  */
 export function getSoundLayers(
@@ -89,10 +86,11 @@ export function getSoundLayers(
   timeOfDay: TimeOfDay,
   weatherCode: number,
   windSpeedKph: number,
-  humidity: number
+  _humidity: number,
 ): SoundLayer[] {
   const layers: SoundLayer[] = [];
   const weatherIntensity = mapWeatherToIntensity(weatherCode);
+  void _humidity;
 
   // Determine if this soundscape should include birds
   const includeBirds = shouldIncludeBirds();
@@ -103,25 +101,49 @@ export function getSoundLayers(
   switch (biome) {
     case 'city':
       layers.push(
-        ...getCitySounds(timeOfDay, weatherIntensity, windSpeedKph, includeBirds, includeCrickets)
+        ...getCitySounds(
+          timeOfDay,
+          weatherIntensity,
+          windSpeedKph,
+          includeBirds,
+          includeCrickets,
+        ),
       );
       break;
 
     case 'forest':
       layers.push(
-        ...getForestSounds(timeOfDay, weatherIntensity, windSpeedKph, includeBirds, includeCrickets)
+        ...getForestSounds(
+          timeOfDay,
+          weatherIntensity,
+          windSpeedKph,
+          includeBirds,
+          includeCrickets,
+        ),
       );
       break;
 
     case 'field':
       layers.push(
-        ...getFieldSounds(timeOfDay, weatherIntensity, windSpeedKph, includeBirds, includeCrickets)
+        ...getFieldSounds(
+          timeOfDay,
+          weatherIntensity,
+          windSpeedKph,
+          includeBirds,
+          includeCrickets,
+        ),
       );
       break;
 
     case 'beach':
       layers.push(
-        ...getBeachSounds(timeOfDay, weatherIntensity, windSpeedKph, includeBirds, includeCrickets)
+        ...getBeachSounds(
+          timeOfDay,
+          weatherIntensity,
+          windSpeedKph,
+          includeBirds,
+          includeCrickets,
+        ),
       );
       break;
 
@@ -133,20 +155,32 @@ export function getSoundLayers(
           windSpeedKph,
           includeBirds,
           includeCrickets,
-          includeFrogs
-        )
+          includeFrogs,
+        ),
       );
       break;
 
     case 'ocean':
       layers.push(
-        ...getOceanSounds(timeOfDay, weatherIntensity, windSpeedKph, includeBirds, includeCrickets)
+        ...getOceanSounds(
+          timeOfDay,
+          weatherIntensity,
+          windSpeedKph,
+          includeBirds,
+          includeCrickets,
+        ),
       );
       break;
 
     case 'desert':
       layers.push(
-        ...getDesertSounds(timeOfDay, weatherIntensity, windSpeedKph, includeBirds, includeCrickets)
+        ...getDesertSounds(
+          timeOfDay,
+          weatherIntensity,
+          windSpeedKph,
+          includeBirds,
+          includeCrickets,
+        ),
       );
       break;
   }
@@ -167,56 +201,132 @@ function getCitySounds(
   timeOfDay: TimeOfDay,
   weather: ReturnType<typeof mapWeatherToIntensity>,
   windSpeedKph: number,
-  includeBirds: boolean,
-  includeCrickets: boolean
+  _includeBirds: boolean,
+  _includeCrickets: boolean,
 ): SoundLayer[] {
   const layers: SoundLayer[] = [];
+  const windVolume = calculateWindVolume(windSpeedKph);
+  const isNight = timeOfDay === 'night';
+  const isEvening = timeOfDay === 'evening';
+  const isDry = !weather.hasPrecipitation;
 
-  // Base city ambience - always present
+  void _includeBirds;
+  void _includeCrickets;
+
+  // Core traffic bed
   layers.push({
     soundId: 'traffic_medium_close',
-    volume: 0.5,
+    volume: isNight ? 0.4 : 0.55,
     loop: true,
     category: 'base',
   });
 
-  layers.push({
-    soundId: 'chatter-footsteps_medium',
-    volume: 0.4,
-    loop: true,
-    category: 'base',
-    fadeInDuration: 3,
-  });
-
-  // Add distant traffic for depth
+  // Layer distant traffic for depth and width
   layers.push({
     soundId: 'traffic_medium_far',
-    volume: 0.3,
+    volume: 0.28,
     loop: true,
     category: 'base',
     fadeInDuration: 4,
   });
 
-  // Weather: Rain + city traffic mix
-  if (weather.hasPrecipitation) {
+  // Pedestrian ambience - calmer at night or during heavy rain
+  if (!isNight && (isDry || weather.rain < 0.4)) {
     layers.push({
-      soundId: 'rain-wind-city-traffic_medium_far',
-      volume: Math.min(0.7, weather.rain * 0.9),
+      soundId: 'chatter-footsteps_medium',
+      volume: 0.35,
       loop: true,
-      category: 'weather',
-      fadeInDuration: 5,
+      category: 'base',
+      fadeInDuration: 3,
     });
   }
 
-  // Accent: Church bells in early morning or evening
-  if (timeOfDay === 'evening') {
+  // Passing cars add movement during drier periods
+  if (isDry) {
     layers.push({
-      soundId: 'church-bells_medium_far',
+      soundId: 'cars-passing_medium_close',
       volume: 0.25,
       loop: true,
       category: 'accent',
       fadeInDuration: 2,
-      startDelay: 10, // Delay to avoid overwhelming initial soundscape
+      startDelay: 6,
+    });
+
+    layers.push({
+      soundId: 'cars-passing_low_far',
+      volume: 0.18,
+      loop: true,
+      category: 'accent',
+      fadeInDuration: 5,
+      startDelay: 14,
+    });
+  }
+
+  // Weather: rain-soaked asphalt blend
+  if (weather.hasPrecipitation) {
+    layers.push({
+      soundId: 'rain-wind-city-traffic_medium_far',
+      volume: Math.min(0.75, 0.45 + weather.rain * 0.6),
+      loop: true,
+      category: 'weather',
+      fadeInDuration: 5,
+    });
+
+    // Interior drip for sheltered spaces
+    layers.push({
+      soundId: 'drops-bucket-collecting-drips_light_close',
+      volume: 0.18,
+      loop: true,
+      category: 'accent',
+      fadeInDuration: 6,
+      startDelay: 20,
+    });
+  }
+
+  // Sky and vertical accents when skies are clearer
+  if (isDry && weather.thunder === 0 && windSpeedKph < 25) {
+    layers.push({
+      soundId: 'plane_overhead-light',
+      volume: 0.22,
+      loop: true,
+      category: 'accent',
+      fadeInDuration: 4,
+      startDelay: 30,
+    });
+  }
+
+  // Breezy residential touches
+  if (windVolume > 0.35 && isDry) {
+    layers.push({
+      soundId: 'windchimes_close',
+      volume: Math.min(0.22, windVolume * 0.35),
+      loop: true,
+      category: 'accent',
+      fadeInDuration: 6,
+      startDelay: 18,
+    });
+  }
+
+  // Late-night interior hum
+  if (isNight) {
+    layers.push({
+      soundId: 'fan_close',
+      volume: 0.2,
+      loop: true,
+      category: 'base',
+      fadeInDuration: 8,
+    });
+  }
+
+  // Cultural accent at sunrise/sunset
+  if (isEvening) {
+    layers.push({
+      soundId: 'church-bells_medium_far',
+      volume: 0.22,
+      loop: true,
+      category: 'accent',
+      fadeInDuration: 3,
+      startDelay: 10,
     });
   }
 
@@ -237,31 +347,42 @@ function getForestSounds(
   weather: ReturnType<typeof mapWeatherToIntensity>,
   windSpeedKph: number,
   includeBirds: boolean,
-  includeCrickets: boolean
+  includeCrickets: boolean,
 ): SoundLayer[] {
   const layers: SoundLayer[] = [];
+  const windVolume = calculateWindVolume(windSpeedKph);
+  const isNight = timeOfDay === 'night';
+  const isEvening = timeOfDay === 'evening';
 
-  // Base: Birds (daytime only, 30% chance)
+  // Base: Birds + rustling canopy (daytime, optional)
   if (timeOfDay === 'day' && includeBirds) {
     layers.push({
       soundId: 'birds-forest_light_far',
-      volume: 0.3,
+      volume: 0.28,
       loop: true,
       category: 'base',
     });
+
+    layers.push({
+      soundId: 'wind-light_birds_medium',
+      volume: 0.22,
+      loop: true,
+      category: 'base',
+      fadeInDuration: 5,
+      startDelay: 10,
+    });
   }
 
-  // Base: Wind through forest (always present, volume varies)
-  const windVolume = calculateWindVolume(windSpeedKph);
+  // Base: Forest wind bed
   layers.push({
     soundId: 'wind_forest_medium',
-    volume: Math.max(0.3, windVolume * 0.7), // Never silent, scale with wind
+    volume: Math.max(0.3, windVolume * 0.7),
     loop: true,
     category: 'base',
     fadeInDuration: 4,
   });
 
-  // Weather: Rain through forest canopy
+  // Weather: Rain through canopy + dripping leaves
   if (weather.hasPrecipitation) {
     layers.push({
       soundId: 'rain_medium',
@@ -270,24 +391,35 @@ function getForestSounds(
       category: 'weather',
       fadeInDuration: 6,
     });
+
+    layers.push({
+      soundId: 'wind-leaves_rustling-medium_rain_light',
+      volume: Math.min(0.35, 0.18 + weather.rain * 0.4),
+      loop: true,
+      category: 'base',
+      fadeInDuration: 7,
+    });
   }
 
-  // Weather: Thunder (if stormy)
+  // Weather: Thunder variants
   if (weather.thunder > 0) {
     layers.push({
-      soundId: 'thunder_light_far',
-      volume: Math.min(0.5, weather.thunder * 0.6),
+      soundId:
+        weather.thunder > 0.6
+          ? 'thunder_medium_close'
+          : 'thunder_light_far_rain_medium',
+      volume: Math.min(0.5, weather.thunder * 0.65),
       loop: true,
       category: 'weather',
       fadeInDuration: 3,
     });
   }
 
-  // Time accent: Crickets at evening/night (30% chance)
-  if ((timeOfDay === 'evening' || timeOfDay === 'night') && includeCrickets) {
+  // Evening cicadas / night insects (30% chance)
+  if ((isEvening || isNight) && includeCrickets) {
     layers.push({
-      soundId: 'crickets_far',
-      volume: timeOfDay === 'night' ? 0.35 : 0.25,
+      soundId: 'cicada_heavy',
+      volume: isNight ? 0.32 : 0.24,
       loop: true,
       category: 'accent',
       fadeInDuration: 8,
@@ -311,9 +443,11 @@ function getFieldSounds(
   weather: ReturnType<typeof mapWeatherToIntensity>,
   windSpeedKph: number,
   includeBirds: boolean,
-  includeCrickets: boolean
+  includeCrickets: boolean,
 ): SoundLayer[] {
   const layers: SoundLayer[] = [];
+  const windVolume = calculateWindVolume(windSpeedKph);
+  const isNight = timeOfDay === 'night';
 
   // Base: Distant birds (daytime, 30% chance)
   if (timeOfDay === 'day' && includeBirds) {
@@ -323,10 +457,18 @@ function getFieldSounds(
       loop: true,
       category: 'base',
     });
+
+    layers.push({
+      soundId: 'wind-leaves_rustling-light_birds_light',
+      volume: 0.18,
+      loop: true,
+      category: 'base',
+      fadeInDuration: 4,
+      startDelay: 8,
+    });
   }
 
   // Base: Strong wind through grass/field (prominent in open areas)
-  const windVolume = calculateWindVolume(windSpeedKph);
   layers.push({
     soundId: windSpeedKph > 20 ? 'wind_field_strong' : 'wind_grass_strong',
     volume: Math.max(0.4, windVolume * 0.9), // Wind is more prominent in fields
@@ -337,8 +479,9 @@ function getFieldSounds(
 
   // Weather: Light rain on grass
   if (weather.hasPrecipitation) {
+    const rainSoundId = weather.rain > 0.6 ? 'rain_medium_close' : 'rain_light';
     layers.push({
-      soundId: 'rain_light',
+      soundId: rainSoundId,
       volume: Math.min(0.6, weather.rain * 0.75),
       loop: true,
       category: 'weather',
@@ -349,7 +492,10 @@ function getFieldSounds(
   // Weather: Distant thunder
   if (weather.thunder > 0) {
     layers.push({
-      soundId: 'thunder_light_far',
+      soundId:
+        weather.thunder > 0.6
+          ? 'thunder_medium_close'
+          : 'thunder_rolling_light_far',
       volume: Math.min(0.45, weather.thunder * 0.55),
       loop: true,
       category: 'weather',
@@ -360,8 +506,8 @@ function getFieldSounds(
   // Time accent: Summer crickets (evening/night, 30% chance)
   if ((timeOfDay === 'evening' || timeOfDay === 'night') && includeCrickets) {
     layers.push({
-      soundId: 'crickets-summer_far',
-      volume: timeOfDay === 'night' ? 0.375 : 0.275,
+      soundId: 'desert-cricket_heavy_close',
+      volume: isNight ? 0.28 : 0.2,
       loop: true,
       category: 'accent',
       fadeInDuration: 10,
@@ -385,24 +531,37 @@ function getBeachSounds(
   weather: ReturnType<typeof mapWeatherToIntensity>,
   windSpeedKph: number,
   includeBirds: boolean,
-  includeCrickets: boolean
+  _includeCrickets: boolean,
 ): SoundLayer[] {
   const layers: SoundLayer[] = [];
 
+  void _includeCrickets;
+
   // Base: Ocean waves (medium, close enough to hear detail)
+  const windVolume = calculateWindVolume(windSpeedKph);
+  const waveBaseId =
+    windSpeedKph > 25 ? 'waves_medium_close_2' : 'waves_medium_close';
   layers.push({
-    soundId: 'waves_medium_close',
-    volume: 0.65,
+    soundId: waveBaseId,
+    volume: 0.64,
     loop: true,
     category: 'base',
   });
 
+  // Layer distant surf for width
+  layers.push({
+    soundId: 'waves_light_far',
+    volume: 0.28,
+    loop: true,
+    category: 'base',
+    fadeInDuration: 8,
+  });
+
   // Base: Coastal wind with/without birds (30% chance for birds during daytime)
-  const windVolume = calculateWindVolume(windSpeedKph);
   if (timeOfDay === 'day' && includeBirds) {
     layers.push({
       soundId: 'wind_coastal_birds',
-      volume: Math.max(0.2, windVolume * 0.35),
+      volume: Math.max(0.22, windVolume * 0.4),
       loop: true,
       category: 'base',
       fadeInDuration: 4,
@@ -421,8 +580,8 @@ function getBeachSounds(
   // Weather: Rain on beach
   if (weather.hasPrecipitation) {
     layers.push({
-      soundId: 'rain_medium',
-      volume: Math.min(0.55, weather.rain * 0.7),
+      soundId: weather.rain > 0.6 ? 'rain_medium_close' : 'rain_light',
+      volume: Math.min(0.55, 0.35 + weather.rain * 0.6),
       loop: true,
       category: 'weather',
       fadeInDuration: 5,
@@ -432,7 +591,8 @@ function getBeachSounds(
   // Weather: Thunder over ocean
   if (weather.thunder > 0) {
     layers.push({
-      soundId: 'thunder_medium_close',
+      soundId:
+        weather.thunder > 0.6 ? 'thunder_medium_close' : 'thunder_light_far',
       volume: Math.min(0.6, weather.thunder * 0.75),
       loop: true,
       category: 'weather',
@@ -458,7 +618,7 @@ function getLakeSounds(
   windSpeedKph: number,
   includeBirds: boolean,
   includeCrickets: boolean,
-  includeFrogs: boolean
+  includeFrogs: boolean,
 ): SoundLayer[] {
   const layers: SoundLayer[] = [];
 
@@ -468,6 +628,14 @@ function getLakeSounds(
     volume: 0.5,
     loop: true,
     category: 'base',
+  });
+
+  layers.push({
+    soundId: 'waves_light_close',
+    volume: 0.25,
+    loop: true,
+    category: 'base',
+    fadeInDuration: 7,
   });
 
   // Base: Gentle wind (lakes are more sheltered)
@@ -489,6 +657,15 @@ function getLakeSounds(
       category: 'base',
       fadeInDuration: 3,
     });
+
+    layers.push({
+      soundId: 'wind-leaves_rustling-light_birds_light-2',
+      volume: 0.16,
+      loop: true,
+      category: 'base',
+      fadeInDuration: 5,
+      startDelay: 12,
+    });
   }
 
   // Weather: Rain on lake water
@@ -500,12 +677,20 @@ function getLakeSounds(
       category: 'weather',
       fadeInDuration: 6,
     });
+
+    layers.push({
+      soundId: 'stream_light_close',
+      volume: Math.min(0.22, 0.1 + weather.rain * 0.3),
+      loop: true,
+      category: 'base',
+      fadeInDuration: 8,
+    });
   }
 
   // Weather: Distant thunder
   if (weather.thunder > 0) {
     layers.push({
-      soundId: 'thunder_light_far',
+      soundId: 'thunder_rolling_light_far',
       volume: Math.min(0.5, weather.thunder * 0.6),
       loop: true,
       category: 'weather',
@@ -521,6 +706,17 @@ function getLakeSounds(
       loop: true,
       category: 'accent',
       fadeInDuration: 12,
+    });
+  } else if (
+    (timeOfDay === 'evening' || timeOfDay === 'night') &&
+    includeCrickets
+  ) {
+    layers.push({
+      soundId: 'cicada_heavy',
+      volume: 0.22,
+      loop: true,
+      category: 'accent',
+      fadeInDuration: 10,
     });
   }
 
@@ -541,16 +737,24 @@ function getOceanSounds(
   weather: ReturnType<typeof mapWeatherToIntensity>,
   windSpeedKph: number,
   includeBirds: boolean,
-  includeCrickets: boolean
+  _includeCrickets: boolean,
 ): SoundLayer[] {
   const layers: SoundLayer[] = [];
 
+  void _includeCrickets;
   // Base: Distant ocean waves
   layers.push({
     soundId: 'waves_medium_far',
-    volume: 0.6,
+    volume: 0.62,
     loop: true,
     category: 'base',
+  });
+  layers.push({
+    soundId: 'waves_light_close',
+    volume: 0.26,
+    loop: true,
+    category: 'base',
+    fadeInDuration: 9,
   });
 
   // Base: Coastal wind (ocean winds tend to be steady)
@@ -563,10 +767,21 @@ function getOceanSounds(
     fadeInDuration: 4,
   });
 
+  if (timeOfDay === 'day' && includeBirds) {
+    layers.push({
+      soundId: 'wind_coastal_birds',
+      volume: Math.max(0.2, windVolume * 0.35),
+      loop: true,
+      category: 'base',
+      fadeInDuration: 6,
+      startDelay: 12,
+    });
+  }
+
   // Weather: Rain on ocean
   if (weather.hasPrecipitation) {
     layers.push({
-      soundId: 'rain_medium',
+      soundId: weather.rain > 0.6 ? 'rain_medium_close' : 'rain_medium',
       volume: Math.min(0.6, weather.rain * 0.75),
       loop: true,
       category: 'weather',
@@ -577,7 +792,10 @@ function getOceanSounds(
   // Weather: Thunder over water
   if (weather.thunder > 0) {
     layers.push({
-      soundId: 'thunder_medium_close',
+      soundId:
+        weather.thunder > 0.7
+          ? 'thunder_medium_close'
+          : 'thunder_light_far_rain_medium',
       volume: Math.min(0.65, weather.thunder * 0.8),
       loop: true,
       category: 'weather',
@@ -602,35 +820,53 @@ function getDesertSounds(
   weather: ReturnType<typeof mapWeatherToIntensity>,
   windSpeedKph: number,
   includeBirds: boolean,
-  includeCrickets: boolean
+  includeCrickets: boolean,
 ): SoundLayer[] {
   const layers: SoundLayer[] = [];
 
   // Base: Wind (primary desert sound)
   const windVolume = calculateWindVolume(windSpeedKph);
   layers.push({
-    soundId: 'wind_field_strong',
-    volume: Math.max(0.35, windVolume * 0.8),
+    soundId: 'desert-wind_light',
+    volume: Math.max(0.32, windVolume * 0.7),
     loop: true,
     category: 'base',
     fadeInDuration: 3,
+  });
+  layers.push({
+    soundId: 'wind_field_strong',
+    volume: Math.max(0.2, windVolume * 0.45),
+    loop: true,
+    category: 'base',
+    fadeInDuration: 6,
+    startDelay: 10,
   });
 
   // Optional: Very subtle distant birds (day only, low volume, 30% chance)
   if (timeOfDay === 'day' && includeBirds) {
     layers.push({
-      soundId: 'birds_far',
-      volume: 0.1,
+      soundId: 'desert-birds_bugs_light',
+      volume: 0.18,
       loop: true,
       category: 'base',
       fadeInDuration: 5,
     });
   }
 
+  if ((timeOfDay === 'evening' || timeOfDay === 'night') && includeCrickets) {
+    layers.push({
+      soundId: 'desert-cricket_heavy_close',
+      volume: timeOfDay === 'night' ? 0.26 : 0.2,
+      loop: true,
+      category: 'accent',
+      fadeInDuration: 9,
+    });
+  }
+
   // Weather: Rain (rare in desert, but dramatic when it occurs)
   if (weather.hasPrecipitation) {
     layers.push({
-      soundId: 'rain_light',
+      soundId: weather.rain > 0.4 ? 'rain_medium_close' : 'rain_light',
       volume: Math.min(0.5, weather.rain * 0.65),
       loop: true,
       category: 'weather',
@@ -641,7 +877,10 @@ function getDesertSounds(
   // Weather: Thunder (desert storms are intense)
   if (weather.thunder > 0) {
     layers.push({
-      soundId: 'thunder_medium_close',
+      soundId:
+        weather.thunder > 0.7
+          ? 'thunder_medium_close'
+          : 'thunder_rolling_light_far',
       volume: Math.min(0.7, weather.thunder * 0.85),
       loop: true,
       category: 'weather',
@@ -661,12 +900,14 @@ function getDesertSounds(
  * @example
  * getSoundLayerSummary(layers)  // → { base: 3, weather: 1, accent: 1 }
  */
-export function getSoundLayerSummary(layers: SoundLayer[]): Record<string, number> {
+export function getSoundLayerSummary(
+  layers: SoundLayer[],
+): Record<string, number> {
   return layers.reduce(
     (summary, layer) => {
       summary[layer.category] = (summary[layer.category] || 0) + 1;
       return summary;
     },
-    {} as Record<string, number>
+    {} as Record<string, number>,
   );
 }

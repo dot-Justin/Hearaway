@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import SearchBar from "@/components/SearchBar";
 import WeatherDisplay from "@/components/WeatherDisplay";
@@ -10,7 +10,7 @@ import AudioLaunchOverlay from "@/components/AudioLaunchOverlay";
 import AudioControls from "@/components/AudioControls";
 import { useAudio } from "@/components/AudioProvider";
 import { useTheme } from "@/components/ThemeProvider";
-import { getWeather } from "@/lib/weather";
+import { getWeather, getWeatherByCoordinates } from "@/lib/weather";
 import type { WeatherData } from "@/types/weather";
 import { getTimeOfDay, getBiomeImagePath } from "@/lib/biomeUtils";
 import { blurIn, blurInSubtle } from "@/lib/animations";
@@ -22,6 +22,7 @@ export default function Home() {
   const { updateSoundscape, isReady, hasInteracted } = useAudio();
   const { theme } = useTheme();
   const [isBrandReady, setIsBrandReady] = useState(false);
+  const refreshIntervalRef = useRef<number | null>(null);
 
   // Calculate background image based on biome, time of day, and location coordinates
   // Location coordinates ensure deterministic image selection - same location = same image
@@ -59,6 +60,44 @@ export default function Home() {
   }, [weatherData, isReady, updateSoundscape]);
 
   useEffect(() => {
+    if (!weatherData) {
+      if (refreshIntervalRef.current !== null) {
+        clearInterval(refreshIntervalRef.current);
+        refreshIntervalRef.current = null;
+      }
+      return;
+    }
+
+    const { lat, lon } = weatherData.biome.coordinates;
+    const { name, region, country } = weatherData.location;
+
+    const refreshWeather = async () => {
+      try {
+        const updatedData = await getWeatherByCoordinates({
+          lat,
+          lon,
+          name,
+          region,
+          country,
+        });
+        setWeatherData(updatedData);
+      } catch (refreshError) {
+        console.error("Failed to refresh weather data:", refreshError);
+      }
+    };
+
+    const intervalId = window.setInterval(refreshWeather, 15 * 60 * 1000);
+    refreshIntervalRef.current = intervalId;
+
+    return () => {
+      if (refreshIntervalRef.current !== null) {
+        clearInterval(refreshIntervalRef.current);
+        refreshIntervalRef.current = null;
+      }
+    };
+  }, [weatherData]);
+
+  useEffect(() => {
     setIsBrandReady(true);
   }, []);
 
@@ -89,7 +128,6 @@ export default function Home() {
                     }
                     alt="Hearaway Logo"
                     width={420}
-                    // lol
                     height={140}
                     priority
                   />
