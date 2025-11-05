@@ -75,7 +75,7 @@ export default function AudioLaunchOverlay() {
         >
           <h2 className="text-4xl md:text-5xl font-serif">Ready to listen?</h2>
           <p className="text-text-secondary dark:text-dark-text-secondary text-lg leading-relaxed">
-            Welcome to Hearaway MVP v1.0.6!
+            Welcome to Hearaway MVP v1.0.7!
             <br />
             This is an early version, which means it&rsquo;s unfinished,
             probably buggy, and a little rough around the edges. If you spot

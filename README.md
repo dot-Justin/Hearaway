@@ -41,5 +41,10 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-### Version
-Current version: 1.0.2-mvp
+### Version History
+
+**v1.0.7-mvp**
+- Disabled theme toggle, defaulting to dark mode. Will revisit in the future.
+
+**v1.0.6-mvp**
+- Web Audio context hardening improvements

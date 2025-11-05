@@ -4,7 +4,7 @@ import "./globals.css";
 import { cookies } from "next/headers";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AudioProvider } from "@/components/AudioProvider";
-import ThemeToggle from "@/components/ThemeToggle";
+// import ThemeToggle from "@/components/ThemeToggle";
 
 const THEME_STORAGE_KEY = "hearaway-theme";
 
@@ -32,8 +32,8 @@ const themeInitializer = `
     }
 
     if (!theme) {
-      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      theme = prefersDark ? 'dark' : 'light';
+      // Default to dark theme
+      theme = 'dark';
     }
 
     if (theme === 'dark') {
@@ -142,7 +142,7 @@ export default async function RootLayout({
       <body className={`${gambarino.variable} ${articulat.variable} antialiased`}>
         <ThemeProvider initialTheme={initialTheme}>
           <AudioProvider>
-            <ThemeToggle />
+            {/* <ThemeToggle /> */}
             {children}
           </AudioProvider>
         </ThemeProvider>
