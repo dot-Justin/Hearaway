@@ -119,10 +119,10 @@ export class AudioController {
    *   clearAll: false
    * });
    */
-  updateSoundscape(
+  async updateSoundscape(
     weatherData: WeatherData,
     config: Partial<SoundscapeTransitionConfig> = {}
-  ): void {
+  ): Promise<void> {
     if (!this.isReady) {
       console.error('AudioController not initialized');
       return;
@@ -147,7 +147,7 @@ export class AudioController {
     });
 
     // Apply soundscape transition
-    this.transitionSoundscape(newLayers, transition);
+    await this.transitionSoundscape(newLayers, transition);
 
     // Update current state
     this.currentSoundscape = newLayers;
@@ -167,23 +167,23 @@ export class AudioController {
    * @param newLayers - Target sound layer configuration
    * @param config - Transition configuration
    */
-  private transitionSoundscape(
+  private async transitionSoundscape(
     newLayers: SoundLayer[],
     config: SoundscapeTransitionConfig
-  ): void {
+  ): Promise<void> {
     // If clearAll is true, stop everything and start fresh
     if (config.clearAll) {
       this.audioManager.stopAll(config.fadeOutDuration);
-      setTimeout(() => {
-        newLayers.forEach((layer) => {
-          this.audioManager.play(layer.soundId, {
+      setTimeout(async () => {
+        for (const layer of newLayers) {
+          await this.audioManager.play(layer.soundId, {
             volume: layer.volume,
             loop: layer.loop,
             fadeInDuration: config.fadeInDuration,
             category: layer.category,
             startDelay: layer.startDelay,
           });
-        });
+        }
       }, config.fadeOutDuration * 1000);
       return;
     }
@@ -207,15 +207,15 @@ export class AudioController {
     });
 
     // Add new sounds
-    toAdd.forEach((layer) => {
-      this.audioManager.play(layer.soundId, {
+    for (const layer of toAdd) {
+      await this.audioManager.play(layer.soundId, {
         volume: layer.volume,
         loop: layer.loop,
         fadeInDuration: layer.fadeInDuration || config.fadeInDuration,
         category: layer.category,
         startDelay: layer.startDelay,
       });
-    });
+    }
 
     // Adjust volume for kept sounds
     toKeep.forEach((layer) => {
@@ -248,14 +248,14 @@ export class AudioController {
    * @example
    * controller.setSoundscape('forest', 'night', 0, 10, 80);
    */
-  setSoundscape(
+  async setSoundscape(
     biome: BiomeType,
     timeOfDay: TimeOfDay,
     weatherCode: number,
     windSpeed: number,
     humidity: number,
     config: Partial<SoundscapeTransitionConfig> = {}
-  ): void {
+  ): Promise<void> {
     if (!this.isReady) {
       console.error('AudioController not initialized');
       return;
@@ -264,7 +264,7 @@ export class AudioController {
     const transition = { ...DEFAULT_TRANSITION, ...config };
     const newLayers = getSoundLayers(biome, timeOfDay, weatherCode, windSpeed, humidity);
 
-    this.transitionSoundscape(newLayers, transition);
+    await this.transitionSoundscape(newLayers, transition);
     this.currentSoundscape = newLayers;
   }
 

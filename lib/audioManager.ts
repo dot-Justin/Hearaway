@@ -43,6 +43,39 @@ export class AudioManager {
   private failedLoads: string[] = [];
 
   /**
+   * Ensure the audio context is active and ready for operations.
+   *
+   * Resumes suspended contexts and reinitializes closed contexts.
+   * Call before decode/play operations to prevent InvalidStateError.
+   *
+   * @returns Promise that resolves when context is active
+   */
+  private async ensureAudioContextActive(): Promise<void> {
+    if (!this.audioContext) {
+      throw new Error("AudioContext not initialized");
+    }
+
+    const state = this.audioContext.state;
+    console.log(`[AudioContext] State check: ${state}`);
+
+    if (state === "suspended") {
+      console.log("[AudioContext] Resuming suspended context");
+      await this.audioContext.resume();
+      console.log(`[AudioContext] Resumed, new state: ${this.audioContext.state}`);
+      return;
+    }
+
+    if (state === "closed") {
+      console.warn("[AudioContext] Context closed, reinitializing");
+      this.isInitialized = false;
+      await this.init();
+      return;
+    }
+
+    // State is "running" - all good
+  }
+
+  /**
    * Initialize the audio context and master gain node.
    *
    * Must be called in response to user interaction (click, tap) to satisfy
@@ -163,7 +196,7 @@ export class AudioManager {
    * Load and decode a single audio file into an AudioBuffer.
    *
    * Tries multiple file extensions (.ogg, .mp3, .wav) for browser compatibility.
-   * Caches the buffer for reuse.
+   * Caches the buffer for reuse. Detects and recovers from AudioContext state errors.
    *
    * @param soundId - Sound identifier
    * @returns Promise resolving to AudioBuffer
@@ -178,29 +211,94 @@ export class AudioManager {
       return this.audioBuffers.get(soundId)!;
     }
 
+    // Ensure context is active before decoding
+    await this.ensureAudioContextActive();
+
     // Try all available file formats
     const paths = getAudioPathVariants(soundId);
 
-    for (const path of paths) {
+    for (let pathIndex = 0; pathIndex < paths.length; pathIndex++) {
+      const path = paths[pathIndex];
+      const extension = path.split(".").pop();
+
       try {
+        console.log(
+          `[Load] Attempting ${soundId} (${extension}) - ${pathIndex + 1}/${paths.length}`,
+        );
+
         const response = await fetch(path);
-        if (!response.ok) continue;
+        if (!response.ok) {
+          console.log(`[Load] ${soundId}: ${extension} not found (${response.status})`);
+          continue;
+        }
 
         const arrayBuffer = await response.arrayBuffer();
         const audioBuffer =
           await this.audioContext.decodeAudioData(arrayBuffer);
 
+        console.log(`[Load] ✓ ${soundId} loaded successfully (${extension})`);
+
+        // Successfully loaded - remove from failed list if present
+        this.failedLoads = this.failedLoads.filter((id) => id !== soundId);
+
         this.audioBuffers.set(soundId, audioBuffer);
         return audioBuffer;
-      } catch {
+      } catch (error) {
+        const isDOMException = error instanceof DOMException;
+        const errorName = isDOMException ? error.name : "Unknown";
+
+        console.warn(
+          `[Load] ${soundId} (${extension}) decode error: ${errorName}`,
+        );
+
+        // Detect AudioContext state errors
+        if (
+          isDOMException &&
+          (errorName === "InvalidStateError" || errorName === "AbortError")
+        ) {
+          console.warn(
+            `[Load] Context state error detected, attempting recovery`,
+          );
+
+          try {
+            // Try to recover context
+            await this.ensureAudioContextActive();
+
+            // Retry this same file once
+            console.log(`[Load] Retrying ${soundId} (${extension}) after recovery`);
+            const retryResponse = await fetch(path);
+            if (retryResponse.ok) {
+              const retryBuffer = await retryResponse.arrayBuffer();
+              const retryAudio =
+                await this.audioContext.decodeAudioData(retryBuffer);
+
+              console.log(`[Load] ✓ ${soundId} loaded after retry (${extension})`);
+
+              // Successfully loaded - remove from failed list if present
+              this.failedLoads = this.failedLoads.filter((id) => id !== soundId);
+
+              this.audioBuffers.set(soundId, retryAudio);
+              return retryAudio;
+            }
+          } catch (retryError) {
+            console.error(
+              `[Load] Retry failed for ${soundId} (${extension}):`,
+              retryError,
+            );
+            // Fall through to try next format
+          }
+        }
+
         // Try next format
         continue;
       }
     }
 
     // All formats failed
-    console.error(`Failed to load audio file: ${soundId}`);
-    this.failedLoads.push(soundId);
+    console.error(`[Load] ✗ Failed all formats for ${soundId}`);
+    if (!this.failedLoads.includes(soundId)) {
+      this.failedLoads.push(soundId);
+    }
     return null;
   }
 
@@ -221,11 +319,14 @@ export class AudioManager {
    *   category: 'base'
    * });
    */
-  play(soundId: string, options: PlayOptions): void {
+  async play(soundId: string, options: PlayOptions): Promise<void> {
     if (!this.audioContext || !this.masterGainNode) {
       console.error("AudioManager not initialized");
       return;
     }
+
+    // Ensure context is active before creating audio nodes
+    await this.ensureAudioContextActive();
 
     // Load buffer if not already loaded
     if (!this.audioBuffers.has(soundId)) {
