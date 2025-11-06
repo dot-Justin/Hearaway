@@ -652,9 +652,17 @@ export class AudioManager {
   setInsideFilterFrequency(frequency: number): void {
     this.insideFilterFrequency = Math.max(200, Math.min(2000, frequency));
 
-    // If inside mode is active, update filter immediately
-    if (this.isInsideMode && this.lowpassFilterNode) {
-      this.lowpassFilterNode.frequency.setValueAtTime(this.insideFilterFrequency, this.audioContext?.currentTime || 0);
+    // If inside mode is active, update filter with smooth ramp to avoid clicks
+    if (this.isInsideMode && this.lowpassFilterNode && this.audioContext) {
+      const now = this.audioContext.currentTime;
+      const rampDuration = 0.1; // 100ms smooth ramp
+
+      // Cancel any existing automation
+      this.lowpassFilterNode.frequency.cancelScheduledValues(now);
+
+      // Smooth exponential ramp to new frequency
+      this.lowpassFilterNode.frequency.setValueAtTime(this.lowpassFilterNode.frequency.value, now);
+      this.lowpassFilterNode.frequency.exponentialRampToValueAtTime(this.insideFilterFrequency, now + rampDuration);
     }
   }
 

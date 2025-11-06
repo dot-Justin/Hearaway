@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import Image from "next/image";
 import { useAudio } from "./AudioProvider";
-import { blurInFast } from "@/lib/animations";
 
 /**
  * InsideModeToggle
