@@ -155,7 +155,11 @@ export default function Home() {
             animate={hasInteracted ? "visible" : "hidden"}
             custom={0.15}
           >
-            <SearchBar onSearch={handleSearch} isLoading={isLoading} />
+            <SearchBar
+              onSearch={handleSearch}
+              isLoading={isLoading}
+              hasResults={!!weatherData}
+            />
           </motion.div>
 
           {/* Error State */}

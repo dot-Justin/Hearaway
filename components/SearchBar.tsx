@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { blurInFast } from "@/lib/animations";
-import { ArrowRight, Shuffle } from "lucide-react";
+import { ArrowRight, Shuffle, X } from "lucide-react";
 import { getRandomLocation } from "@/lib/randomLocations";
 
 const inputVariants = {
@@ -21,12 +21,14 @@ interface SearchBarProps {
   onSearch: (query: string) => void;
   onRandom?: (location: string) => void;
   isLoading?: boolean;
+  hasResults?: boolean;
 }
 
 export default function SearchBar({
   onSearch,
   onRandom,
   isLoading = false,
+  hasResults = false,
 }: SearchBarProps) {
   const [query, setQuery] = useState("");
   const [error, setError] = useState("");
@@ -36,8 +38,15 @@ export default function SearchBar({
 
   const trimmedQuery = query.trim();
   const hasText = trimmedQuery.length > 0 && !isRandomizing;
+  const showClearButton = hasResults && hasText;
   const isBusy = isLoading || isRandomizing;
-  const iconType = isLoading ? "spinner" : hasText ? "go" : "random";
+  const iconType = isLoading
+    ? "spinner"
+    : showClearButton
+      ? "clear"
+      : hasText
+        ? "go"
+        : "random";
 
   const validateInput = (value: string): boolean => {
     const zipRegex = /^\d{5}$/;
@@ -101,9 +110,28 @@ export default function SearchBar({
     });
   };
 
+  const handleClear = () => {
+    setQuery("");
+    setError("");
+    inputRef.current?.focus();
+  };
+
+  const handleButtonClick = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    if (isBusy) return;
+
+    if (iconType === "clear") {
+      handleClear();
+    } else if (hasText) {
+      submitGo();
+    } else {
+      submitRandom();
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (isBusy) return;
+    if (isBusy || iconType === "clear") return;
 
     if (hasText) submitGo();
     else submitRandom();
@@ -161,7 +189,8 @@ export default function SearchBar({
 
         {/* Primary action button (always visible) */}
         <motion.button
-          type="submit"
+          type="button"
+          onClick={handleButtonClick}
           key="search-cta"
           variants={blurInFast}
           initial="hidden"
@@ -170,9 +199,11 @@ export default function SearchBar({
           aria-label={
             isRandomizing
               ? "Choosing random location"
-              : hasText
-                ? "Go"
-                : "Random location"
+              : iconType === "clear"
+                ? "Clear search"
+                : hasText
+                  ? "Go"
+                  : "Random location"
           }
           className={[
             "absolute right-1.5 top-1/2 -translate-y-1/2",
@@ -218,6 +249,17 @@ export default function SearchBar({
                       fill="none"
                     />
                   </svg>
+                </motion.span>
+              ) : iconType === "clear" ? (
+                <motion.span
+                  key="clear"
+                  variants={blurInFast}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  className="absolute inset-0 grid place-items-center"
+                >
+                  <X className="size-4" aria-hidden="true" />
                 </motion.span>
               ) : iconType === "go" ? (
                 <motion.span
