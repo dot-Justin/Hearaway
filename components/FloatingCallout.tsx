@@ -6,6 +6,8 @@ import {
   shift,
   Placement,
 } from "@floating-ui/react";
+import { AnimatePresence, motion } from "framer-motion";
+import { blurOutFast } from "@/lib/animations";
 
 export type FloatingPlacement = Placement;
 
@@ -25,7 +27,7 @@ export const FloatingCallout = ({
   reference,
   children,
   placement = "bottom-start",
-  offset: offsetDistance = 8,
+  offset: offsetDistance = 12,
   className = "",
 }: FloatingCalloutProps) => {
   const { refs, floatingStyles } = useFloating({
@@ -43,31 +45,38 @@ export const FloatingCallout = ({
       </div>
 
       {/* Floating callout */}
-      {open && (
-        <div
-          ref={refs.setFloating}
-          style={floatingStyles}
-          className={`
-            relative
-            max-w-sm
-            rounded-2xl
-            border border-accent-secondary/35
-            bg-surface/95
-            text-text-primary
-            px-4 py-3
-            backdrop-blur-md
-            transition-colors
-            z-50
-            dark:bg-dark-surface/95
-            dark:text-dark-text-primary
-            dark:border-dark-accent-secondary/40
-            ${className}
-          `}
-        >
-          {/* Content */}
-          <div className="relative">{children}</div>
-        </div>
-      )}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            ref={refs.setFloating}
+            style={floatingStyles}
+            variants={blurOutFast}
+            initial="visible"
+            animate="visible"
+            exit="exit"
+            className={`
+              relative
+              max-w-sm
+              min-w-[18rem]
+              rounded-2xl
+              border border-accent-secondary/35
+              bg-surface/95
+              text-text-primary
+              px-4 py-3
+              backdrop-blur-md
+              transition-colors
+              z-50
+              dark:bg-dark-surface/95
+              dark:text-dark-text-primary
+              dark:border-dark-accent-secondary/40
+              ${className}
+            `}
+          >
+            {/* Content */}
+            <div className="relative">{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
