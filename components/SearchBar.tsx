@@ -33,12 +33,13 @@ export default function SearchBar({
   const [query, setQuery] = useState("");
   const [error, setError] = useState("");
   const [isRandomizing, setIsRandomizing] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const randomTimeoutsRef = useRef<number[]>([]);
 
   const trimmedQuery = query.trim();
   const hasText = trimmedQuery.length > 0 && !isRandomizing;
-  const showClearButton = hasResults && hasText;
+  const showClearButton = hasResults && !isDirty && trimmedQuery.length > 0;
   const isBusy = isLoading || isRandomizing;
   const iconType = isLoading
     ? "spinner"
@@ -64,7 +65,10 @@ export default function SearchBar({
     if (isRandomizing) return;
     const q = trimmedQuery;
     if (!q) return; // guard
-    if (validateInput(q)) onSearch(q);
+    if (validateInput(q)) {
+      onSearch(q);
+      setIsDirty(false);
+    }
   };
 
   const submitRandom = () => {
@@ -83,6 +87,7 @@ export default function SearchBar({
     if (sequence.length === 0) return;
 
     setIsRandomizing(true);
+    setIsDirty(false);
     setError("");
     inputRef.current?.focus();
 
@@ -97,6 +102,7 @@ export default function SearchBar({
       const delay = 120 * index;
       const timeoutId = window.setTimeout(() => {
         setQuery(location);
+        setIsDirty(false);
 
         if (index === sequence.length - 1) {
           onRandom?.(location);
@@ -113,6 +119,7 @@ export default function SearchBar({
   const handleClear = () => {
     setQuery("");
     setError("");
+    setIsDirty(false);
     inputRef.current?.focus();
   };
 
@@ -164,6 +171,7 @@ export default function SearchBar({
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
+              setIsDirty(true);
               if (error) setError("");
             }}
             placeholder="Where do you want to hear?"
