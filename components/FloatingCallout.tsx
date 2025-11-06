@@ -7,7 +7,7 @@ import {
   Placement,
 } from "@floating-ui/react";
 import { AnimatePresence, motion } from "framer-motion";
-import { blurOutFast } from "@/lib/animations";
+import { blurInFast, blurOutFast } from "@/lib/animations";
 
 export type FloatingPlacement = Placement;
 
@@ -50,10 +50,10 @@ export const FloatingCallout = ({
           <motion.div
             ref={refs.setFloating}
             style={floatingStyles}
-            variants={blurOutFast}
-            initial="visible"
+            variants={blurInFast}
+            initial="hidden"
             animate="visible"
-            exit="exit"
+            exit={blurOutFast.exit}
             className={`
               relative
               max-w-sm

@@ -1,10 +1,11 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useAudio } from "./AudioProvider";
 import { FloatingCallout } from "./FloatingCallout";
+import { blurIn, blurInFast } from "@/lib/animations";
 
 /**
  * InsideModeToggle
@@ -24,10 +25,13 @@ export default function InsideModeToggle() {
     insideFilterFrequency,
     toggleInsideMode,
     setInsideFilterFrequency,
+    hasInteracted,
   } = useAudio();
 
   const [isHovered, setIsHovered] = useState(false);
   const [showCallout, setShowCallout] = useState(false);
+  const [hasDismissedCallout, setHasDismissedCallout] = useState(false);
+  const calloutTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     // Check if callout was dismissed before
@@ -37,17 +41,60 @@ export default function InsideModeToggle() {
         .find((row) => row.startsWith(CALLOUT_COOKIE_KEY))
         ?.split("=")[1] === "true";
 
-    if (!isDismissed) {
-      setShowCallout(true);
+    if (isDismissed) {
+      setHasDismissedCallout(true);
+      setShowCallout(false);
     }
+  }, []);
+
+  useEffect(() => {
+    if (!isReady || !hasInteracted || hasDismissedCallout) {
+      setShowCallout(false);
+      if (calloutTimerRef.current !== null) {
+        window.clearTimeout(calloutTimerRef.current);
+        calloutTimerRef.current = null;
+      }
+      return;
+    }
+
+    if (calloutTimerRef.current !== null) {
+      window.clearTimeout(calloutTimerRef.current);
+    }
+
+    calloutTimerRef.current = window.setTimeout(() => {
+      setShowCallout(true);
+      calloutTimerRef.current = null;
+    }, 5000);
+
+    return () => {
+      if (calloutTimerRef.current !== null) {
+        window.clearTimeout(calloutTimerRef.current);
+        calloutTimerRef.current = null;
+      }
+    };
+  }, [isReady, hasInteracted, hasDismissedCallout]);
+
+  useEffect(() => {
+    return () => {
+      if (calloutTimerRef.current !== null) {
+        window.clearTimeout(calloutTimerRef.current);
+        calloutTimerRef.current = null;
+      }
+    };
   }, []);
 
   const handleDismissCallout = () => {
     setShowCallout(false);
+    setHasDismissedCallout(true);
     // Set cookie to expire in 1 year
     const expiryDate = new Date();
     expiryDate.setFullYear(expiryDate.getFullYear() + 1);
     document.cookie = `${CALLOUT_COOKIE_KEY}=true; path=/; expires=${expiryDate.toUTCString()}`;
+
+    if (calloutTimerRef.current !== null) {
+      window.clearTimeout(calloutTimerRef.current);
+      calloutTimerRef.current = null;
+    }
   };
 
   // Snap to nearest frequency stop (reversed: left = less filtered, right = more filtered)
@@ -67,7 +114,12 @@ export default function InsideModeToggle() {
   if (!isReady) return null;
 
   return (
-    <div className="fixed top-8 left-8 z-50">
+    <motion.div
+      className="fixed top-8 left-8 z-50"
+      variants={blurIn}
+      initial="hidden"
+      animate={hasInteracted ? "visible" : "hidden"}
+    >
       <FloatingCallout
         open={showCallout}
         onOpenChange={setShowCallout}
@@ -95,22 +147,46 @@ export default function InsideModeToggle() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <div className="w-6 h-6 relative">
-                {isInsideMode ? (
-                  <Image
-                    src="/assets/ui/controls/inside-mode.svg"
-                    alt="Inside mode"
-                    fill
-                    className="w-full h-full invert"
-                  />
-                ) : (
-                  <Image
-                    src="/assets/ui/controls/outside-mode.svg"
-                    alt="Outside mode"
-                    fill
-                    className="w-full h-full invert"
-                  />
-                )}
+              <div className="relative size-6">
+                <AnimatePresence mode="sync" initial={false}>
+                  {isInsideMode ? (
+                    <motion.span
+                      key="inside-icon"
+                      className="absolute inset-0 grid place-items-center"
+                      variants={blurInFast}
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                    >
+                      <Image
+                        src="/assets/ui/controls/inside-mode-centered.svg"
+                        alt="Inside mode"
+                        fill
+                        className="object-contain invert"
+                        sizes="24px"
+                        priority={false}
+                      />
+                    </motion.span>
+                  ) : (
+                    <motion.span
+                      key="outside-icon"
+                      className="absolute inset-0 grid place-items-center"
+                      variants={blurInFast}
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                    >
+                      <Image
+                        src="/assets/ui/controls/outside-mode.svg"
+                        alt="Outside mode"
+                        fill
+                        className="object-contain invert"
+                        sizes="24px"
+                        priority={false}
+                      />
+                    </motion.span>
+                  )}
+                </AnimatePresence>
               </div>
             </motion.button>
 
@@ -183,6 +259,6 @@ export default function InsideModeToggle() {
           </button>
         </div>
       </FloatingCallout>
-    </div>
+    </motion.div>
   );
 }
