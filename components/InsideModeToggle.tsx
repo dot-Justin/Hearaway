@@ -27,11 +27,13 @@ export default function InsideModeToggle() {
   const [isHovered, setIsHovered] = useState(false);
 
   // Snap to nearest frequency stop (reversed: left = less filtered, right = more filtered)
-  const frequencyStops = [2000, 1500, 1000, 600]; // reversed order
+  const frequencyStops = [600, 1000, 1500, 2000];
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Number(e.target.value);
+    const sliderValue = Number(e.target.value);
+    // Invert: slider 600 -> frequency 2000, slider 2000 -> frequency 600
+    const actualFrequency = 2600 - sliderValue;
     const nearest = frequencyStops.reduce((prev, curr) =>
-      Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev
+      Math.abs(curr - actualFrequency) < Math.abs(prev - actualFrequency) ? curr : prev
     );
     setInsideFilterFrequency(nearest);
   };
@@ -89,7 +91,7 @@ export default function InsideModeToggle() {
                 min="600"
                 max="2000"
                 step="1"
-                value={insideFilterFrequency}
+                value={2600 - insideFilterFrequency}
                 onChange={handleSliderChange}
                 disabled={!isInsideMode}
                 aria-label="Filter frequency"
