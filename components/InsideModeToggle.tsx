@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import Image from "next/image";
 import { useAudio } from "./AudioProvider";
-import { blurInFast, blurOutFast } from "@/lib/animations";
+import { blurInFast } from "@/lib/animations";
 
 /**
  * InsideModeToggle
@@ -41,33 +41,31 @@ export default function InsideModeToggle() {
           onClick={toggleInsideMode}
           aria-label={isInsideMode ? "Switch to outside mode" : "Switch to inside mode"}
           title={isInsideMode ? "Outside Mode: Clear Audio" : "Inside Mode: Muffled Audio"}
-          className="size-10 grid place-items-center rounded-full bg-accent-secondary dark:bg-dark-accent-secondary hover:bg-accent-primary dark:hover:bg-dark-accent-primary text-text-primary dark:text-dark-text-primary shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-primary/50 transition-colors"
+          className="size-12 grid place-items-center rounded-full bg-accent-secondary dark:bg-dark-accent-secondary hover:bg-accent-primary dark:hover:bg-dark-accent-primary text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-primary/50 transition-colors"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          <div className="w-5 h-5 relative">
+          <div className="w-6 h-6 relative">
             {isInsideMode ? (
               <Image
                 src="/assets/ui/controls/inside-mode.svg"
                 alt="Inside mode"
                 fill
-                className="w-full h-full"
-                style={{ color: "currentColor" }}
+                className="w-full h-full invert"
               />
             ) : (
               <Image
                 src="/assets/ui/controls/outside-mode.svg"
                 alt="Outside mode"
                 fill
-                className="w-full h-full"
-                style={{ color: "currentColor" }}
+                className="w-full h-full invert"
               />
             )}
           </div>
         </motion.button>
 
         {/* Frequency slider - appears on hover */}
-        <AnimatePresence>
+        <AnimatePresence mode="sync">
           {isHovered && (
             <motion.div
               className="flex items-center gap-2 bg-surface dark:bg-dark-surface border border-accent-secondary/30 dark:border-dark-accent-secondary/30 rounded-full px-4 py-2 shadow-sm"
