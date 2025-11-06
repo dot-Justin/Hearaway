@@ -1,6 +1,6 @@
 {
   "name": "hearaway",
-  "version": "1.0.8-mvp",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
