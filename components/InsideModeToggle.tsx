@@ -26,8 +26,8 @@ export default function InsideModeToggle() {
 
   const [isHovered, setIsHovered] = useState(false);
 
-  // Snap to nearest frequency stop
-  const frequencyStops = [600, 1000, 1500, 2000];
+  // Snap to nearest frequency stop (reversed: left = less filtered, right = more filtered)
+  const frequencyStops = [2000, 1500, 1000, 600]; // reversed order
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = Number(e.target.value);
     const nearest = frequencyStops.reduce((prev, curr) =>
