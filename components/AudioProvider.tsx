@@ -42,7 +42,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [currentBiome, setCurrentBiome] = useState<BiomeType | null>(null);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [isInsideMode, setInsideModeState] = useState(false);
-  const [insideFilterFrequency, setInsideFilterFrequencyState] = useState(600);
+  const [insideFilterFrequency, setInsideFilterFrequencyState] = useState(1500);
 
   const controllerRef = useRef(getAudioController());
   const initializationPromiseRef = useRef<Promise<void> | null>(null);

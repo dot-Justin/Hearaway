@@ -40,7 +40,7 @@ export class AudioManager {
   private isMuted = false;
   private masterVolume = 1.0;
   private isInsideMode = false;
-  private insideFilterFrequency = 600;
+  private insideFilterFrequency = 1500;
   private isInitialized = false;
   private preloadComplete = false;
   private failedLoads: string[] = [];

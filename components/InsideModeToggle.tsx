@@ -26,6 +26,16 @@ export default function InsideModeToggle() {
 
   const [isHovered, setIsHovered] = useState(false);
 
+  // Snap to nearest frequency stop
+  const frequencyStops = [600, 1000, 1500, 2000];
+  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = Number(e.target.value);
+    const nearest = frequencyStops.reduce((prev, curr) =>
+      Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev
+    );
+    setInsideFilterFrequency(nearest);
+  };
+
   if (!isReady) return null;
 
   return (
@@ -68,25 +78,23 @@ export default function InsideModeToggle() {
         <AnimatePresence mode="sync">
           {isHovered && (
             <motion.div
-              className="flex items-center gap-2 bg-surface dark:bg-dark-surface border border-accent-secondary/30 dark:border-dark-accent-secondary/30 rounded-full px-4 py-2 shadow-sm"
+              className="bg-surface dark:bg-dark-surface border border-accent-secondary/30 dark:border-dark-accent-secondary/30 rounded-full px-3 py-2 shadow-sm"
               initial={{ opacity: 0, filter: "blur(10px)", x: -20 }}
               animate={{ opacity: 1, filter: "blur(0px)", x: 0 }}
               exit={{ opacity: 0, filter: "blur(10px)", x: 0 }}
               transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
             >
-              <span className="text-xs text-text-secondary dark:text-dark-text-secondary whitespace-nowrap font-medium">
-                Filter
-              </span>
               <input
                 type="range"
-                min="200"
+                min="600"
                 max="2000"
+                step="1"
                 value={insideFilterFrequency}
-                onChange={(e) => setInsideFilterFrequency(Number(e.target.value))}
+                onChange={handleSliderChange}
                 disabled={!isInsideMode}
                 aria-label="Filter frequency"
                 className={[
-                  "w-32 h-2 rounded-full appearance-none cursor-pointer",
+                  "w-40 h-2 rounded-full appearance-none cursor-pointer",
                   "bg-accent-secondary/20 dark:bg-dark-accent-secondary/20",
                   isInsideMode
                     ? "opacity-100"
@@ -111,9 +119,6 @@ export default function InsideModeToggle() {
                   "[&::-moz-range-thumb]:hover:scale-110",
                 ].join(" ")}
               />
-              <span className="text-xs text-text-secondary dark:text-dark-text-secondary whitespace-nowrap font-medium min-w-[3.5rem] text-right">
-                {insideFilterFrequency}Hz
-              </span>
             </motion.div>
           )}
         </AnimatePresence>
