@@ -35,6 +35,7 @@ export class AudioManager {
   private activeTracks: Map<string, AudioTrack> = new Map();
   private audioBuffers: Map<string, AudioBuffer> = new Map();
   private loopTimeouts: Map<string, number> = new Map();
+  private playTokens: Map<string, number> = new Map();
 
   // State
   private isMuted = false;
@@ -64,7 +65,9 @@ export class AudioManager {
     if (state === "suspended") {
       console.log("[AudioContext] Resuming suspended context");
       await this.audioContext.resume();
-      console.log(`[AudioContext] Resumed, new state: ${this.audioContext.state}`);
+      console.log(
+        `[AudioContext] Resumed, new state: ${this.audioContext.state}`,
+      );
       return;
     }
 
@@ -140,8 +143,10 @@ export class AudioManager {
 
       // Create low-pass filter for inside mode effect
       this.lowpassFilterNode = this.audioContext.createBiquadFilter();
-      this.lowpassFilterNode.type = 'lowpass';
-      this.lowpassFilterNode.frequency.value = this.isInsideMode ? this.insideFilterFrequency : 20000;
+      this.lowpassFilterNode.type = "lowpass";
+      this.lowpassFilterNode.frequency.value = this.isInsideMode
+        ? this.insideFilterFrequency
+        : 20000;
       this.lowpassFilterNode.Q.value = 0.7;
 
       // Audio chain: individual track gains → master gain → lowpass filter → compressor → destination
@@ -238,7 +243,9 @@ export class AudioManager {
 
         const response = await fetch(path);
         if (!response.ok) {
-          console.log(`[Load] ${soundId}: ${extension} not found (${response.status})`);
+          console.log(
+            `[Load] ${soundId}: ${extension} not found (${response.status})`,
+          );
           continue;
         }
 
@@ -275,17 +282,23 @@ export class AudioManager {
             await this.ensureAudioContextActive();
 
             // Retry this same file once
-            console.log(`[Load] Retrying ${soundId} (${extension}) after recovery`);
+            console.log(
+              `[Load] Retrying ${soundId} (${extension}) after recovery`,
+            );
             const retryResponse = await fetch(path);
             if (retryResponse.ok) {
               const retryBuffer = await retryResponse.arrayBuffer();
               const retryAudio =
                 await this.audioContext.decodeAudioData(retryBuffer);
 
-              console.log(`[Load] ✓ ${soundId} loaded after retry (${extension})`);
+              console.log(
+                `[Load] ✓ ${soundId} loaded after retry (${extension})`,
+              );
 
               // Successfully loaded - remove from failed list if present
-              this.failedLoads = this.failedLoads.filter((id) => id !== soundId);
+              this.failedLoads = this.failedLoads.filter(
+                (id) => id !== soundId,
+              );
 
               this.audioBuffers.set(soundId, retryAudio);
               return retryAudio;
@@ -313,6 +326,19 @@ export class AudioManager {
   }
 
   /**
+   * Increment and return the latest play token for a sound.
+   *
+   * Tokens allow asynchronous load operations to verify that a sound is
+   * still requested before resuming playback, preventing stale layers
+   * from reappearing after transitions.
+   */
+  private incrementPlayToken(soundId: string): number {
+    const next = (this.playTokens.get(soundId) ?? 0) + 1;
+    this.playTokens.set(soundId, next);
+    return next;
+  }
+
+  /**
    * Play a sound with specified options.
    *
    * Creates a new AudioBufferSourceNode and applies fade-in if requested.
@@ -329,21 +355,32 @@ export class AudioManager {
    *   category: 'base'
    * });
    */
-  async play(soundId: string, options: PlayOptions): Promise<void> {
+  async play(
+    soundId: string,
+    options: PlayOptions,
+    requestToken?: number,
+  ): Promise<void> {
     if (!this.audioContext || !this.masterGainNode) {
       console.error("AudioManager not initialized");
       return;
     }
 
+    const token = requestToken ?? this.incrementPlayToken(soundId);
+
     // Ensure context is active before creating audio nodes
     await this.ensureAudioContextActive();
+
+    // If a newer request arrived while waiting, abort
+    if (this.playTokens.get(soundId) !== token) {
+      return;
+    }
 
     // Load buffer if not already loaded
     if (!this.audioBuffers.has(soundId)) {
       console.warn(`Sound not preloaded: ${soundId}. Loading now...`);
       this.loadAudioBuffer(soundId).then((buffer) => {
-        if (buffer) {
-          this.play(soundId, options);
+        if (buffer && this.playTokens.get(soundId) === token) {
+          void this.play(soundId, options, token);
         }
       });
       return;
@@ -358,7 +395,12 @@ export class AudioManager {
     // Stop existing track with this ID (if any), unless it's already fading out
     const existingTrack = this.activeTracks.get(soundId);
     if (existingTrack && !existingTrack.isFadingOut) {
-      this.stop(soundId, options.fadeInDuration || 0);
+      this.stop(soundId, options.fadeInDuration || 0, false);
+    }
+
+    // If the track was invalidated while stopping, exit early
+    if (this.playTokens.get(soundId) !== token) {
+      return;
     }
 
     // Create source node
@@ -512,7 +554,10 @@ export class AudioManager {
    * @example
    * audioManager.stop('rain_medium', 5);  // Fade out over 5 seconds
    */
-  stop(soundId: string, fadeOutDuration = 0): void {
+  stop(soundId: string, fadeOutDuration = 0, invalidate = true): void {
+    if (invalidate) {
+      this.incrementPlayToken(soundId);
+    }
     const track = this.activeTracks.get(soundId);
     if (!track) return;
 
@@ -637,8 +682,14 @@ export class AudioManager {
     this.lowpassFilterNode.frequency.cancelScheduledValues(now);
 
     // Smooth transition using exponential ramp
-    this.lowpassFilterNode.frequency.setValueAtTime(this.lowpassFilterNode.frequency.value, start);
-    this.lowpassFilterNode.frequency.exponentialRampToValueAtTime(targetFrequency, end);
+    this.lowpassFilterNode.frequency.setValueAtTime(
+      this.lowpassFilterNode.frequency.value,
+      start,
+    );
+    this.lowpassFilterNode.frequency.exponentialRampToValueAtTime(
+      targetFrequency,
+      end,
+    );
   }
 
   /**
@@ -661,8 +712,14 @@ export class AudioManager {
       this.lowpassFilterNode.frequency.cancelScheduledValues(now);
 
       // Smooth exponential ramp to new frequency
-      this.lowpassFilterNode.frequency.setValueAtTime(this.lowpassFilterNode.frequency.value, now);
-      this.lowpassFilterNode.frequency.exponentialRampToValueAtTime(this.insideFilterFrequency, now + rampDuration);
+      this.lowpassFilterNode.frequency.setValueAtTime(
+        this.lowpassFilterNode.frequency.value,
+        now,
+      );
+      this.lowpassFilterNode.frequency.exponentialRampToValueAtTime(
+        this.insideFilterFrequency,
+        now + rampDuration,
+      );
     }
   }
 
@@ -787,6 +844,7 @@ export class AudioManager {
     this.lowpassFilterNode = null;
     this.activeTracks.clear();
     this.audioBuffers.clear();
+    this.playTokens.clear();
     this.isInitialized = false;
     this.preloadComplete = false;
   }
