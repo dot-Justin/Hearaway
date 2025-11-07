@@ -75,7 +75,7 @@ export default function AudioLaunchOverlay() {
         >
           <h2 className="text-4xl md:text-5xl font-serif">Ready to listen?</h2>
           <p className="text-text-secondary dark:text-dark-text-secondary text-lg leading-relaxed">
-            Welcome to Hearaway Beta 0.2.0!
+            Welcome to Hearaway Beta 0.3.0!
             <br />
             This is an early version, which means it&rsquo;s unfinished,
             probably buggy, and a little rough around the edges. If you spot
@@ -100,6 +100,12 @@ export default function AudioLaunchOverlay() {
               GitHub
             </a>
             .
+          </p>
+          <p className="text-text-secondary dark:text-dark-text-secondary text-lg leading-relaxed">
+            <em>
+              New in 0.3.x: &quot;Use my location&quot; to automatically set
+              your location instead of searching.
+            </em>
           </p>
         </motion.div>
 

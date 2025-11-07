@@ -53,6 +53,23 @@ export default function Home() {
     }
   };
 
+  const handleLocationRequest = async (lat: number, lon: number) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const data = await getWeatherByCoordinates({ lat, lon });
+      setWeatherData(data);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to fetch weather data",
+      );
+      setWeatherData(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Update soundscape when weather data changes and audio is ready
   useEffect(() => {
     if (weatherData && isReady) {
@@ -157,6 +174,7 @@ export default function Home() {
           >
             <SearchBar
               onSearch={handleSearch}
+              onLocationRequest={handleLocationRequest}
               isLoading={isLoading}
               hasResults={!!weatherData}
             />

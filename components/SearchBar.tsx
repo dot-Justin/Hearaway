@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { blurInFast } from "@/lib/animations";
 import { ArrowRight, Shuffle, X } from "lucide-react";
+import { MapPin } from "@phosphor-icons/react";
 import { getRandomLocation } from "@/lib/randomLocations";
 
 const inputVariants = {
@@ -17,9 +18,16 @@ const inputVariants = {
   },
 } as const;
 
+const geolocationOptions: PositionOptions = {
+  enableHighAccuracy: true,
+  timeout: 10000,
+  maximumAge: 300000, // Cache for 5 minutes
+};
+
 interface SearchBarProps {
   onSearch: (query: string) => void;
   onRandom?: (location: string) => void;
+  onLocationRequest?: (lat: number, lon: number) => void;
   isLoading?: boolean;
   hasResults?: boolean;
 }
@@ -27,6 +35,7 @@ interface SearchBarProps {
 export default function SearchBar({
   onSearch,
   onRandom,
+  onLocationRequest,
   isLoading = false,
   hasResults = false,
 }: SearchBarProps) {
@@ -34,6 +43,9 @@ export default function SearchBar({
   const [error, setError] = useState("");
   const [isRandomizing, setIsRandomizing] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const [locationStatus, setLocationStatus] = useState<
+    "idle" | "loading" | "denied"
+  >("idle");
   const inputRef = useRef<HTMLInputElement>(null);
   const randomTimeoutsRef = useRef<number[]>([]);
 
@@ -41,13 +53,15 @@ export default function SearchBar({
   const hasText = trimmedQuery.length > 0 && !isRandomizing;
   const showClearButton = hasResults && !isDirty && trimmedQuery.length > 0;
   const isBusy = isLoading || isRandomizing;
-  const iconType = isLoading
-    ? "spinner"
-    : showClearButton
-      ? "clear"
-      : hasText
-        ? "go"
-        : "random";
+  const isGettingLocation = locationStatus === "loading";
+  const iconType =
+    isLoading || isGettingLocation
+      ? "spinner"
+      : showClearButton
+        ? "clear"
+        : hasText
+          ? "go"
+          : "random";
 
   const validateInput = (value: string): boolean => {
     const zipRegex = /^\d{5}$/;
@@ -123,6 +137,86 @@ export default function SearchBar({
     inputRef.current?.focus();
   };
 
+  const handleUseLocation = async () => {
+    if (!onLocationRequest || isGettingLocation) return;
+
+    if (!navigator.geolocation) {
+      setError("Geolocation not supported");
+      return;
+    }
+
+    setLocationStatus("loading");
+    setError("");
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+
+        // Use BigDataCloud for reverse geocoding (free, no API key)
+        try {
+          const geocodeUrl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`;
+          const response = await fetch(geocodeUrl);
+          const data = await response.json();
+
+          if (data.city || data.locality) {
+            const cityName = data.city || data.locality;
+            setLocationStatus("idle");
+            onSearch(cityName);
+            return;
+          }
+        } catch (geocodeErr) {
+          console.error("Reverse geocoding failed:", geocodeErr);
+        }
+
+        // Fallback to coordinates if reverse geocoding fails
+        setLocationStatus("idle");
+        onLocationRequest(latitude, longitude);
+      },
+      async (err) => {
+        console.error("Geolocation error:", err);
+
+        // Try IP-based fallback for code 2 (POSITION_UNAVAILABLE)
+        if (err.code === 2) {
+          try {
+            const response = await fetch("https://ipapi.co/json/");
+            const data = await response.json();
+
+            if (data.latitude && data.longitude) {
+              // Use the city name from IP geolocation to search
+              const cityName =
+                data.city || `${data.latitude},${data.longitude}`;
+              setLocationStatus("idle");
+              onSearch(cityName);
+              return;
+            }
+          } catch (fallbackErr) {
+            console.error("IP geolocation fallback failed:", fallbackErr);
+          }
+        }
+
+        // Provide helpful error messages
+        if (err.code === 1) {
+          setError(
+            "Location permission denied. Please allow location access in your browser settings.",
+          );
+        } else if (err.code === 2) {
+          setError("Location unavailable. Please try searching manually.");
+        } else if (err.code === 3) {
+          setError("Location request timed out. Please try again.");
+        } else {
+          setError("Unable to get your location. Please try again.");
+        }
+
+        setLocationStatus("denied");
+        setTimeout(() => {
+          setLocationStatus("idle");
+          setError("");
+        }, 5000);
+      },
+      geolocationOptions,
+    );
+  };
+
   const handleButtonClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     if (isBusy) return;
@@ -151,6 +245,13 @@ export default function SearchBar({
     };
   }, []);
 
+  const locationText =
+    locationStatus === "loading"
+      ? "Getting location..."
+      : locationStatus === "denied"
+        ? "Permission denied, try again"
+        : "Use my location";
+
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-xl">
       <div className="relative">
@@ -162,7 +263,7 @@ export default function SearchBar({
             "border border-accent-secondary/30 dark:border-dark-accent-secondary/30",
             "transition-[border,box-shadow]",
             "focus-within:border-accent-primary dark:focus-within:border-dark-accent-primary",
-            isBusy ? "opacity-60" : "",
+            isBusy || isGettingLocation ? "opacity-60" : "",
           ].join(" ")}
         >
           <motion.input
@@ -312,6 +413,27 @@ export default function SearchBar({
           </motion.p>
         )}
       </AnimatePresence>
+
+      {/* Use my location */}
+      {onLocationRequest && (
+        <div className="mt-2 pl-3">
+          <button
+            type="button"
+            onClick={handleUseLocation}
+            disabled={isGettingLocation}
+            className={[
+              "flex items-center text-sm transition-colors",
+              locationStatus === "denied"
+                ? "text-warm/70 dark:text-dark-warm/70"
+                : "text-text-primary/50 dark:text-dark-text-primary/50 hover:text-text-primary/70 dark:hover:text-dark-text-primary/70",
+              isGettingLocation ? "cursor-wait opacity-50" : "",
+            ].join(" ")}
+          >
+            <MapPin className="mr-1.5 size-4" weight="fill" />
+            {locationText}
+          </button>
+        </div>
+      )}
     </form>
   );
 }
