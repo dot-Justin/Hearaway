@@ -161,6 +161,34 @@ export const blurOutFast: Variants = {
 };
 
 /**
+ * Quick Blur In/Out Animation
+ * Shorter duration for quick transitions (0.3s in, 0.2s out)
+ */
+export const blurInOutQuick: Variants = {
+  hidden: {
+    opacity: 0,
+    filter: "blur(500px)",
+  },
+  visible: (delay: number = 0) => ({
+    opacity: 1,
+    filter: "blur(0px)",
+    transition: {
+      duration: 0.5,
+      ease: defaultEasing,
+      delay,
+    },
+  }),
+  exit: {
+    opacity: 0,
+    filter: "blur(500px)",
+    transition: {
+      duration: 0.3,
+      ease: defaultEasing,
+    },
+  },
+};
+
+/**
  * Subtle Blur In Animation
  * Lighter blur effect (5px) for delicate transitions
  *
@@ -247,7 +275,7 @@ export const backgroundCrossfade: Variants = {
 export function createBlurAnimation(
   blurAmount: number = 20,
   duration: number = defaultDuration,
-  direction: "in" | "out" = "in"
+  direction: "in" | "out" = "in",
 ): Variants {
   if (direction === "in") {
     return {
