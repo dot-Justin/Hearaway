@@ -18,16 +18,9 @@ const inputVariants = {
   },
 } as const;
 
-const geolocationOptions: PositionOptions = {
-  enableHighAccuracy: true,
-  timeout: 10000,
-  maximumAge: 300000, // Cache for 5 minutes
-};
-
 interface SearchBarProps {
   onSearch: (query: string) => void;
   onRandom?: (location: string) => void;
-  onLocationRequest?: (lat: number, lon: number) => void;
   isLoading?: boolean;
   hasResults?: boolean;
 }
@@ -35,7 +28,6 @@ interface SearchBarProps {
 export default function SearchBar({
   onSearch,
   onRandom,
-  onLocationRequest,
   isLoading = false,
   hasResults = false,
 }: SearchBarProps) {
@@ -44,7 +36,7 @@ export default function SearchBar({
   const [isRandomizing, setIsRandomizing] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [locationStatus, setLocationStatus] = useState<
-    "idle" | "loading" | "denied"
+    "idle" | "loading" | "error"
   >("idle");
   const inputRef = useRef<HTMLInputElement>(null);
   const randomTimeoutsRef = useRef<number[]>([]);
@@ -138,83 +130,45 @@ export default function SearchBar({
   };
 
   const handleUseLocation = async () => {
-    if (!onLocationRequest || isGettingLocation) return;
-
-    if (!navigator.geolocation) {
-      setError("Geolocation not supported");
-      return;
-    }
+    if (isGettingLocation) return;
 
     setLocationStatus("loading");
     setError("");
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
+    try {
+      console.log("→ Finding location...");
+      const response = await fetch("https://ipwho.is/");
+      const data = await response.json();
 
-        // Use BigDataCloud for reverse geocoding (free, no API key)
-        try {
-          const geocodeUrl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`;
-          const response = await fetch(geocodeUrl);
-          const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.message || "IP geolocation failed");
+      }
 
-          if (data.city || data.locality) {
-            const cityName = data.city || data.locality;
-            setLocationStatus("idle");
-            onSearch(cityName);
-            return;
-          }
-        } catch (geocodeErr) {
-          console.error("Reverse geocoding failed:", geocodeErr);
-        }
+      console.log("IP geolocation data:", data);
 
-        // Fallback to coordinates if reverse geocoding fails
+      if (data.city) {
+        const fullLocation = `${data.city}, ${data.region}`;
+        console.log("✓ Location found:", fullLocation, {
+          coords: { lat: data.latitude, lon: data.longitude },
+          country: data.country,
+          timezone: data.timezone,
+        });
+
         setLocationStatus("idle");
-        onLocationRequest(latitude, longitude);
-      },
-      async (err) => {
-        console.error("Geolocation error:", err);
+        onSearch(data.city);
+      } else {
+        throw new Error("No city found in response");
+      }
+    } catch (err) {
+      console.error("✗ Find location failed:", err);
+      setError("Unable to find location.");
+      setLocationStatus("error");
 
-        // Try IP-based fallback for code 2 (POSITION_UNAVAILABLE)
-        if (err.code === 2) {
-          try {
-            const response = await fetch("https://ipapi.co/json/");
-            const data = await response.json();
-
-            if (data.latitude && data.longitude) {
-              // Use the city name from IP geolocation to search
-              const cityName =
-                data.city || `${data.latitude},${data.longitude}`;
-              setLocationStatus("idle");
-              onSearch(cityName);
-              return;
-            }
-          } catch (fallbackErr) {
-            console.error("IP geolocation fallback failed:", fallbackErr);
-          }
-        }
-
-        // Provide helpful error messages
-        if (err.code === 1) {
-          setError(
-            "Location permission denied. Please allow location access in your browser settings.",
-          );
-        } else if (err.code === 2) {
-          setError("Location unavailable. Please try searching manually.");
-        } else if (err.code === 3) {
-          setError("Location request timed out. Please try again.");
-        } else {
-          setError("Unable to get your location. Please try again.");
-        }
-
-        setLocationStatus("denied");
-        setTimeout(() => {
-          setLocationStatus("idle");
-          setError("");
-        }, 5000);
-      },
-      geolocationOptions,
-    );
+      setTimeout(() => {
+        setLocationStatus("idle");
+        setError("");
+      }, 4000);
+    }
   };
 
   const handleButtonClick = (event: MouseEvent<HTMLButtonElement>) => {
@@ -247,9 +201,9 @@ export default function SearchBar({
 
   const locationText =
     locationStatus === "loading"
-      ? "Getting location..."
-      : locationStatus === "denied"
-        ? "Permission denied, try again"
+      ? "Finding location..."
+      : locationStatus === "error"
+        ? "Unable to find location"
         : "Use my location";
 
   return (
@@ -414,32 +368,31 @@ export default function SearchBar({
         )}
       </AnimatePresence>
 
-      {/* Use my location */}
-      {onLocationRequest && (
-        <div className="mt-2 pl-3">
-          <button
-            type="button"
-            onClick={handleUseLocation}
-            disabled={isGettingLocation}
-            className={[
-              "relative flex items-center text-sm transition-colors",
-              locationStatus === "denied"
-                ? "text-warm/70 dark:text-dark-warm/70"
-                : "text-text-primary/50 dark:text-dark-text-primary/50 hover:text-text-primary/70 dark:hover:text-dark-text-primary/70",
-              isGettingLocation ? "cursor-wait opacity-50" : "",
-            ].join(" ")}
-          >
-            <span className="relative inline-flex items-center">
-              <AnimatePresence mode="sync" initial={false}>
-                <motion.span
-                  key={locationStatus}
-                  className="absolute inset-0 flex items-center whitespace-nowrap"
-                  variants={blurInOutQuick}
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                  style={{ willChange: "filter, opacity" }}
-                >
+      {/* Find my location */}
+      <div className="mt-2 pl-3">
+        <button
+          type="button"
+          onClick={handleUseLocation}
+          disabled={isGettingLocation}
+          className={[
+            "relative flex items-center text-sm transition-colors",
+            locationStatus === "error"
+              ? "text-warm/70 dark:text-dark-warm/70"
+              : "text-text-primary/50 dark:text-dark-text-primary/50 hover:text-text-primary/70 dark:hover:text-dark-text-primary/70",
+            isGettingLocation ? "cursor-wait opacity-50" : "",
+          ].join(" ")}
+        >
+          <span className="relative inline-flex items-center">
+            <AnimatePresence mode="sync" initial={false}>
+              <motion.span
+                key={locationStatus}
+                className="absolute inset-0 flex items-center whitespace-nowrap"
+                variants={blurInOutQuick}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                style={{ willChange: "filter, opacity" }}
+              >
                 {locationStatus === "loading" ? (
                   <svg
                     className="mr-1.5 size-4 animate-spin"
@@ -462,23 +415,22 @@ export default function SearchBar({
                       fill="none"
                     />
                   </svg>
-                ) : locationStatus === "denied" ? (
+                ) : locationStatus === "error" ? (
                   <Warning className="mr-1.5 size-4" weight="fill" />
                 ) : (
                   <MapPin className="mr-1.5 size-4" weight="fill" />
                 )}
-                  {locationText}
-                </motion.span>
-              </AnimatePresence>
-              {/* Invisible spacer to maintain width */}
-              <span className="invisible flex items-center" aria-hidden="true">
-                <MapPin className="mr-1.5 size-4" weight="fill" />
                 {locationText}
-              </span>
+              </motion.span>
+            </AnimatePresence>
+            {/* Invisible spacer to maintain width */}
+            <span className="invisible flex items-center" aria-hidden="true">
+              <MapPin className="mr-1.5 size-4" weight="fill" />
+              {locationText}
             </span>
-          </button>
-        </div>
-      )}
+          </span>
+        </button>
+      </div>
     </form>
   );
 }
