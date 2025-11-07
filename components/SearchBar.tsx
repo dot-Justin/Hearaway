@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { blurInFast } from "@/lib/animations";
+import { blurInFast, blurInOutQuick } from "@/lib/animations";
 import { ArrowRight, Shuffle, X } from "lucide-react";
-import { MapPin } from "@phosphor-icons/react";
+import { MapPin, Warning } from "@phosphor-icons/react";
 import { getRandomLocation } from "@/lib/randomLocations";
 
 const inputVariants = {
@@ -422,15 +422,60 @@ export default function SearchBar({
             onClick={handleUseLocation}
             disabled={isGettingLocation}
             className={[
-              "flex items-center text-sm transition-colors",
+              "relative flex items-center text-sm transition-colors",
               locationStatus === "denied"
                 ? "text-warm/70 dark:text-dark-warm/70"
                 : "text-text-primary/50 dark:text-dark-text-primary/50 hover:text-text-primary/70 dark:hover:text-dark-text-primary/70",
               isGettingLocation ? "cursor-wait opacity-50" : "",
             ].join(" ")}
           >
-            <MapPin className="mr-1.5 size-4" weight="fill" />
-            {locationText}
+            <span className="relative inline-flex items-center">
+              <AnimatePresence mode="sync" initial={false}>
+                <motion.span
+                  key={locationStatus}
+                  className="absolute inset-0 flex items-center whitespace-nowrap"
+                  variants={blurInOutQuick}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  style={{ willChange: "filter, opacity" }}
+                >
+                {locationStatus === "loading" ? (
+                  <svg
+                    className="mr-1.5 size-4 animate-spin"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      fill="none"
+                      className="opacity-30"
+                    />
+                    <path
+                      d="M22 12a10 10 0 0 1-10 10"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      fill="none"
+                    />
+                  </svg>
+                ) : locationStatus === "denied" ? (
+                  <Warning className="mr-1.5 size-4" weight="fill" />
+                ) : (
+                  <MapPin className="mr-1.5 size-4" weight="fill" />
+                )}
+                  {locationText}
+                </motion.span>
+              </AnimatePresence>
+              {/* Invisible spacer to maintain width */}
+              <span className="invisible flex items-center" aria-hidden="true">
+                <MapPin className="mr-1.5 size-4" weight="fill" />
+                {locationText}
+              </span>
+            </span>
           </button>
         </div>
       )}
