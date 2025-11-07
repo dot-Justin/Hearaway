@@ -167,7 +167,7 @@ export const blurOutFast: Variants = {
 export const blurInOutQuick: Variants = {
   hidden: {
     opacity: 0,
-    filter: "blur(500px)",
+    filter: "blur(10px)",
   },
   visible: (delay: number = 0) => ({
     opacity: 1,
@@ -180,7 +180,7 @@ export const blurInOutQuick: Variants = {
   }),
   exit: {
     opacity: 0,
-    filter: "blur(500px)",
+    filter: "blur(10px)",
     transition: {
       duration: 0.3,
       ease: defaultEasing,
