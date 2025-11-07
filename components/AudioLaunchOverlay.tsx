@@ -75,7 +75,7 @@ export default function AudioLaunchOverlay() {
         >
           <h2 className="text-4xl md:text-5xl font-serif">Ready to listen?</h2>
           <p className="text-text-secondary dark:text-dark-text-secondary text-lg leading-relaxed">
-            Welcome to Hearaway Beta 0.3.0!
+            Welcome to Hearaway Beta {process.env.NEXT_PUBLIC_APP_VERSION}!
             <br />
             This is an early version, which means it&rsquo;s unfinished,
             probably buggy, and a little rough around the edges. If you spot
