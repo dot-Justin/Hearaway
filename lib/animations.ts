@@ -321,3 +321,28 @@ export function createBlurAnimation(
     };
   }
 }
+
+/**
+ * Simple Fade In/Out Animation
+ * For quick, non-jarring transitions without blur.
+ */
+export const simpleFade: Variants = {
+  hidden: {
+    opacity: 0,
+  },
+  visible: (delay: number = 0) => ({
+    opacity: 1,
+    transition: {
+      duration: 0.2,
+      ease: defaultEasing,
+      delay,
+    },
+  }),
+  exit: {
+    opacity: 0,
+    transition: {
+      duration: 0.2,
+      ease: defaultEasing,
+    },
+  },
+};

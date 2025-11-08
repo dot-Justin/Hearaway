@@ -19,7 +19,7 @@ const inputVariants = {
 } as const;
 
 interface SearchBarProps {
-  onSearch: (query: string) => void;
+  onSearch: (query: string) => Promise<void>;
   onRandom?: (location: string) => void;
   isLoading?: boolean;
   hasResults?: boolean;
@@ -154,8 +154,8 @@ export default function SearchBar({
           timezone: data.timezone,
         });
 
+        await onSearch(data.city);
         setLocationStatus("idle");
-        onSearch(data.city);
       } else {
         throw new Error("No city found in response");
       }
@@ -199,12 +199,13 @@ export default function SearchBar({
     };
   }, []);
 
-  const locationText =
-    locationStatus === "loading"
-      ? "Finding location..."
-      : locationStatus === "error"
-        ? "Unable to find location"
-        : "Use my location";
+  const isLocating = isLoading || locationStatus === "loading";
+
+  const locationText = isLocating
+    ? "Finding location..."
+    : locationStatus === "error"
+      ? "Unable to find location"
+      : "Use my location";
 
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-xl">
@@ -373,19 +374,19 @@ export default function SearchBar({
         <button
           type="button"
           onClick={handleUseLocation}
-          disabled={isGettingLocation}
+          disabled={isLocating}
           className={[
             "relative flex items-center text-sm transition-colors",
             locationStatus === "error"
               ? "text-warm/70 dark:text-dark-warm/70"
               : "text-text-primary/50 dark:text-dark-text-primary/50 hover:text-text-primary/70 dark:hover:text-dark-text-primary/70",
-            isGettingLocation ? "cursor-wait opacity-50" : "",
+            isLocating ? "cursor-wait" : "",
           ].join(" ")}
         >
           <span className="relative inline-flex items-center">
             <AnimatePresence mode="sync" initial={false}>
               <motion.span
-                key={locationStatus}
+                key={isLocating ? "loading" : locationStatus}
                 className="absolute inset-0 flex items-center whitespace-nowrap"
                 variants={blurInOutQuick}
                 initial="hidden"
@@ -393,9 +394,9 @@ export default function SearchBar({
                 exit="exit"
                 style={{ willChange: "filter, opacity" }}
               >
-                {locationStatus === "loading" ? (
+                {isLocating ? (
                   <svg
-                    className="mr-1.5 size-4 animate-spin"
+                    className="relative bottom-px mr-1.5 size-4 animate-spin"
                     viewBox="0 0 24 24"
                     aria-hidden="true"
                   >
@@ -416,17 +417,29 @@ export default function SearchBar({
                     />
                   </svg>
                 ) : locationStatus === "error" ? (
-                  <Warning className="mr-1.5 size-4" weight="fill" />
+                  <Warning
+                    className="relative bottom-px mr-1.5 size-4"
+                    weight="fill"
+                  />
                 ) : (
-                  <MapPin className="mr-1.5 size-4" weight="fill" />
+                  <MapPin
+                    className="relative bottom-px mr-1.5 size-4"
+                    weight="fill"
+                  />
                 )}
                 {locationText}
               </motion.span>
             </AnimatePresence>
-            {/* Invisible spacer to maintain width */}
+            {/* Invisible spacer to maintain width - always use longest text */}
             <span className="invisible flex items-center" aria-hidden="true">
-              <MapPin className="mr-1.5 size-4" weight="fill" />
-              {locationText}
+              <svg
+                className="mr-1.5 size-4"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="10" />
+              </svg>
+              Unable to find location
             </span>
           </span>
         </button>
