@@ -6,6 +6,7 @@ import { blurInFast, blurInOutQuick } from "@/lib/animations";
 import { ArrowRight, Shuffle, X } from "lucide-react";
 import { MapPin, Warning } from "@phosphor-icons/react";
 import { getRandomLocation } from "@/lib/randomLocations";
+import logger from "@/lib/utils/logger";
 
 const inputVariants = {
   resting: {
@@ -136,7 +137,7 @@ export default function SearchBar({
     setError("");
 
     try {
-      console.log("→ Finding location...");
+      logger.debug("→ Finding location...");
       const response = await fetch("https://ipwho.is/");
       const data = await response.json();
 
@@ -144,11 +145,11 @@ export default function SearchBar({
         throw new Error(data.message || "IP geolocation failed");
       }
 
-      console.log("IP geolocation data:", data);
+      logger.debug("IP geolocation data:", data);
 
       if (data.city) {
         const fullLocation = `${data.city}, ${data.region}`;
-        console.log("✓ Location found:", fullLocation, {
+        logger.debug("✓ Location found:", fullLocation, {
           coords: { lat: data.latitude, lon: data.longitude },
           country: data.country,
           timezone: data.timezone,
@@ -160,7 +161,7 @@ export default function SearchBar({
         throw new Error("No city found in response");
       }
     } catch (err) {
-      console.error("✗ Find location failed:", err);
+      logger.error("✗ Find location failed:", err);
       setError("Unable to find location.");
       setLocationStatus("error");
 

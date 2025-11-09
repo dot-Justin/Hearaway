@@ -12,6 +12,7 @@ import InsideModeToggle from "@/components/InsideModeToggle";
 import { useAudio } from "@/components/AudioProvider";
 import { useTheme } from "@/components/ThemeProvider";
 import { getWeather, getWeatherByCoordinates } from "@/lib/weather";
+import logger from "@/lib/utils/logger";
 import type { WeatherData } from "@/types/weather";
 import { getTimeOfDay, getBiomeImagePath } from "@/lib/biomeUtils";
 import { blurIn, blurInSubtle } from "@/lib/animations";
@@ -83,7 +84,7 @@ export default function Home() {
         });
         setWeatherData(updatedData);
       } catch (refreshError) {
-        console.error("Failed to refresh weather data:", refreshError);
+        logger.error("Failed to refresh weather data:", refreshError);
       }
     };
 

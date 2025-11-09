@@ -14,6 +14,7 @@ import { getAudioManager } from './audioManager';
 import { getSoundLayers } from './soundMapping';
 import { getTimeOfDay } from './biomeUtils';
 import { getAllSoundIds } from './audioUtils';
+import logger from './utils/logger';
 import type { BiomeType } from './biomeDetector';
 import type { TimeOfDay } from './biomeUtils';
 import type { WeatherData } from '@/types/weather';
@@ -68,16 +69,16 @@ export class AudioController {
    */
   async initialize(): Promise<void> {
     if (this.isReady) {
-      console.warn('AudioController already initialized');
+      logger.warn('AudioController already initialized');
       return;
     }
 
     try {
       await this.audioManager.init();
       this.isReady = true;
-      console.log('AudioController initialized successfully');
+      logger.debug('AudioController initialized successfully');
     } catch (error) {
-      console.error('Failed to initialize AudioController:', error);
+      logger.error('Failed to initialize AudioController:', error);
       throw error;
     }
   }
@@ -124,7 +125,7 @@ export class AudioController {
     config: Partial<SoundscapeTransitionConfig> = {}
   ): Promise<void> {
     if (!this.isReady) {
-      console.error('AudioController not initialized');
+      logger.error('AudioController not initialized');
       return;
     }
 
@@ -140,7 +141,7 @@ export class AudioController {
     // Get new sound layers
     const newLayers = getSoundLayers(biome, timeOfDay, weatherCode, windSpeed, humidity);
 
-    console.log(`Updating soundscape for ${biome} at ${timeOfDay}:`, {
+    logger.debug(`Updating soundscape for ${biome} at ${timeOfDay}:`, {
       layers: newLayers.length,
       weather: weatherCode,
       wind: `${windSpeed} kph`,
@@ -226,7 +227,7 @@ export class AudioController {
       }
     });
 
-    console.log('Soundscape transition:', {
+    logger.debug('Soundscape transition:', {
       removed: toRemove.map((l) => l.soundId),
       added: toAdd.map((l) => l.soundId),
       kept: toKeep.map((l) => l.soundId),
@@ -257,7 +258,7 @@ export class AudioController {
     config: Partial<SoundscapeTransitionConfig> = {}
   ): Promise<void> {
     if (!this.isReady) {
-      console.error('AudioController not initialized');
+      logger.error('AudioController not initialized');
       return;
     }
 

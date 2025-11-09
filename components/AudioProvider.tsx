@@ -9,6 +9,7 @@ import {
   useRef,
 } from "react";
 import { getAudioController } from "@/lib/audioController";
+import logger from "@/lib/utils/logger";
 import type { BiomeType } from "@/lib/biomeDetector";
 import type { WeatherData } from "@/types/weather";
 
@@ -70,7 +71,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (isReady) {
-      console.warn("Audio already initialized");
+      logger.warn("Audio already initialized");
       return;
     }
 
@@ -93,9 +94,9 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
         setIsReady(true);
         setHasInteracted(true);
-        console.log("Audio system ready");
+        logger.debug("Audio system ready");
       } catch (error) {
-        console.error("Failed to initialize audio:", error);
+        logger.error("Failed to initialize audio:", error);
         throw error;
       } finally {
         setIsLoading(false);
@@ -140,7 +141,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const updateSoundscape = useCallback(
     (weatherData: WeatherData) => {
       if (!isReady) {
-        console.warn("Cannot update soundscape: audio not initialized");
+        logger.warn("Cannot update soundscape: audio not initialized");
         return;
       }
 

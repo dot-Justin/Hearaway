@@ -6,6 +6,7 @@ import type {
 } from "@/types/weather";
 import { getWeatherDescription } from "@/lib/wmoCode";
 import { getBiome } from "@/lib/biomeDetector";
+import logger from "@/lib/utils/logger";
 
 // Convert Celsius to Fahrenheit
 function celsiusToFahrenheit(celsius: number): number {
@@ -143,7 +144,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(transformedData);
   } catch (error) {
-    console.error("Open-Meteo API error:", error);
+    logger.error("Open-Meteo API error:", error);
     return NextResponse.json(
       { error: "Failed to fetch weather data" },
       { status: 500 },

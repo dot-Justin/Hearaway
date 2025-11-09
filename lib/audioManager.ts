@@ -17,6 +17,7 @@
 
 import type { AudioTrack, PlayOptions, AudioSystemState } from "@/types/audio";
 import { getAudioPathVariants, calculateFadeDuration } from "./audioUtils";
+import logger from "./utils/logger";
 
 /**
  * AudioManager - Web Audio API-based sound engine.
@@ -60,19 +61,19 @@ export class AudioManager {
     }
 
     const state = this.audioContext.state;
-    console.log(`[AudioContext] State check: ${state}`);
+    logger.debug(`[AudioContext] State check: ${state}`);
 
     if (state === "suspended") {
-      console.log("[AudioContext] Resuming suspended context");
+      logger.debug("[AudioContext] Resuming suspended context");
       await this.audioContext.resume();
-      console.log(
+      logger.debug(
         `[AudioContext] Resumed, new state: ${this.audioContext.state}`,
       );
       return;
     }
 
     if (state === "closed") {
-      console.warn("[AudioContext] Context closed, reinitializing");
+      logger.warn("[AudioContext] Context closed, reinitializing");
       this.isInitialized = false;
       await this.init();
       return;
@@ -96,7 +97,7 @@ export class AudioManager {
    */
   async init(): Promise<void> {
     if (this.isInitialized) {
-      console.warn("AudioManager already initialized");
+      logger.warn("AudioManager already initialized");
       return;
     }
 
@@ -160,9 +161,9 @@ export class AudioManager {
       }
 
       this.isInitialized = true;
-      console.log("AudioManager initialized successfully");
+      logger.debug("AudioManager initialized successfully");
     } catch (error) {
-      console.error("Failed to initialize AudioManager:", error);
+      logger.error("Failed to initialize AudioManager:", error);
       throw new Error("Failed to initialize audio system");
     }
   }
@@ -184,7 +185,7 @@ export class AudioManager {
       throw new Error("AudioManager not initialized. Call init() first.");
     }
 
-    console.log(`Preloading ${soundIds.length} audio files...`);
+    logger.debug(`Preloading ${soundIds.length} audio files...`);
     const startTime = Date.now();
 
     // Load all sounds in parallel
@@ -196,12 +197,12 @@ export class AudioManager {
     const duration = Date.now() - startTime;
     const successCount = soundIds.length - this.failedLoads.length;
 
-    console.log(
+    logger.debug(
       `Preloaded ${successCount}/${soundIds.length} audio files in ${duration}ms`,
     );
 
     if (this.failedLoads.length > 0) {
-      console.warn("Failed to load sounds:", this.failedLoads);
+      logger.warn("Failed to load sounds:", this.failedLoads);
     }
 
     this.preloadComplete = true;
@@ -237,13 +238,13 @@ export class AudioManager {
       const extension = path.split(".").pop();
 
       try {
-        console.log(
+        logger.debug(
           `[Load] Attempting ${soundId} (${extension}) - ${pathIndex + 1}/${paths.length}`,
         );
 
         const response = await fetch(path);
         if (!response.ok) {
-          console.log(
+          logger.debug(
             `[Load] ${soundId}: ${extension} not found (${response.status})`,
           );
           continue;
@@ -253,7 +254,7 @@ export class AudioManager {
         const audioBuffer =
           await this.audioContext.decodeAudioData(arrayBuffer);
 
-        console.log(`[Load] ✓ ${soundId} loaded successfully (${extension})`);
+        logger.debug(`[Load] ✓ ${soundId} loaded successfully (${extension})`);
 
         // Successfully loaded - remove from failed list if present
         this.failedLoads = this.failedLoads.filter((id) => id !== soundId);
@@ -264,7 +265,7 @@ export class AudioManager {
         const isDOMException = error instanceof DOMException;
         const errorName = isDOMException ? error.name : "Unknown";
 
-        console.warn(
+        logger.warn(
           `[Load] ${soundId} (${extension}) decode error: ${errorName}`,
         );
 
@@ -273,7 +274,7 @@ export class AudioManager {
           isDOMException &&
           (errorName === "InvalidStateError" || errorName === "AbortError")
         ) {
-          console.warn(
+          logger.warn(
             `[Load] Context state error detected, attempting recovery`,
           );
 
@@ -282,7 +283,7 @@ export class AudioManager {
             await this.ensureAudioContextActive();
 
             // Retry this same file once
-            console.log(
+            logger.debug(
               `[Load] Retrying ${soundId} (${extension}) after recovery`,
             );
             const retryResponse = await fetch(path);
@@ -291,7 +292,7 @@ export class AudioManager {
               const retryAudio =
                 await this.audioContext.decodeAudioData(retryBuffer);
 
-              console.log(
+              logger.debug(
                 `[Load] ✓ ${soundId} loaded after retry (${extension})`,
               );
 
@@ -304,7 +305,7 @@ export class AudioManager {
               return retryAudio;
             }
           } catch (retryError) {
-            console.error(
+            logger.error(
               `[Load] Retry failed for ${soundId} (${extension}):`,
               retryError,
             );
@@ -318,7 +319,7 @@ export class AudioManager {
     }
 
     // All formats failed
-    console.error(`[Load] ✗ Failed all formats for ${soundId}`);
+    logger.error(`[Load] ✗ Failed all formats for ${soundId}`);
     if (!this.failedLoads.includes(soundId)) {
       this.failedLoads.push(soundId);
     }
@@ -361,7 +362,7 @@ export class AudioManager {
     requestToken?: number,
   ): Promise<void> {
     if (!this.audioContext || !this.masterGainNode) {
-      console.error("AudioManager not initialized");
+      logger.error("AudioManager not initialized");
       return;
     }
 
@@ -377,7 +378,7 @@ export class AudioManager {
 
     // Load buffer if not already loaded
     if (!this.audioBuffers.has(soundId)) {
-      console.warn(`Sound not preloaded: ${soundId}. Loading now...`);
+      logger.warn(`Sound not preloaded: ${soundId}. Loading now...`);
       this.loadAudioBuffer(soundId).then((buffer) => {
         if (buffer && this.playTokens.get(soundId) === token) {
           void this.play(soundId, options, token);
@@ -388,7 +389,7 @@ export class AudioManager {
 
     const buffer = this.audioBuffers.get(soundId);
     if (!buffer) {
-      console.error(`Failed to get buffer for sound: ${soundId}`);
+      logger.error(`Failed to get buffer for sound: ${soundId}`);
       return;
     }
 
@@ -490,7 +491,7 @@ export class AudioManager {
     const timeUntilCrossfade =
       Math.max(0, track.duration - fadeDuration) * 1000;
 
-    console.log(
+    logger.debug(
       `Scheduling loop crossfade for ${soundId}: ${fadeDuration.toFixed(1)}s fade after ${(
         timeUntilCrossfade / 1000
       ).toFixed(1)}s`,
