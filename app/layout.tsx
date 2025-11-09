@@ -4,6 +4,7 @@ import "./globals.css";
 import { cookies } from "next/headers";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AudioProvider } from "@/components/AudioProvider";
+import { ConsoleBanner } from "@/components/ConsoleBanner";
 // import ThemeToggle from "@/components/ThemeToggle";
 
 const THEME_STORAGE_KEY = "hearaway-theme";
@@ -149,6 +150,7 @@ export default async function RootLayout({
         />
       </head>
       <body className={`${gambarino.variable} ${articulat.variable} antialiased`}>
+        <ConsoleBanner />
         <ThemeProvider initialTheme={initialTheme}>
           <AudioProvider>
             {/* <ThemeToggle /> */}
