@@ -16,6 +16,7 @@ import logger from "@/lib/utils/logger";
 import type { WeatherData } from "@/types/weather";
 import { getTimeOfDay, getBiomeImagePath } from "@/lib/biomeUtils";
 import { blurIn, blurInSubtle } from "@/lib/animations";
+import { useBackgroundPreload } from "@/hooks/useBackgroundPreload";
 
 export default function Home() {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
@@ -25,6 +26,7 @@ export default function Home() {
   const { theme } = useTheme();
   const [isBrandReady, setIsBrandReady] = useState(false);
   const refreshIntervalRef = useRef<number | null>(null);
+  const { preloadBackground } = useBackgroundPreload();
 
   // Calculate background image based on biome, time of day, and location coordinates
   // Location coordinates ensure deterministic image selection - same location = same image
@@ -42,6 +44,10 @@ export default function Home() {
     setError(null);
 
     try {
+      // Start preloading background immediately (don't await)
+      preloadBackground(query);
+
+      // Fetch weather data
       const data = await getWeather(query);
       setWeatherData(data);
     } catch (err) {
