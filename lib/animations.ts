@@ -222,39 +222,31 @@ export const blurInSubtle: Variants = {
 
 /**
  * Background Image Crossfade Variants
- * Specialized variants for background image transitions
- * Used in pairs: old image uses `exit`, new image uses `enter`
+ * Single-layer fade: old image on top fades out to reveal new image underneath
+ *
+ * Exit: ease-in (slow start → fast end) 1.3s with blur
+ * New image loads underneath with no animation (better performance)
  *
  * @example
- * // Old background
+ * // Old background fades out on top
  * <motion.div variants={backgroundCrossfade} initial="visible" exit="exit">
  *   Old background blurs out
  * </motion.div>
  *
- * // New background
- * <motion.div variants={backgroundCrossfade} initial="hidden" animate="visible">
- *   New background deblurs in
- * </motion.div>
+ * // New background underneath (no animation needed)
+ * <div style={{zIndex: 0}}>New background</div>
  */
 export const backgroundCrossfade: Variants = {
-  hidden: {
-    opacity: 0,
-    filter: "blur(20px)",
-  },
   visible: {
     opacity: 1,
     filter: "blur(0px)",
-    transition: {
-      duration: defaultDuration,
-      ease: defaultEasing,
-    },
   },
   exit: {
     opacity: 0,
     filter: "blur(20px)",
     transition: {
-      duration: defaultDuration,
-      ease: defaultEasing,
+      duration: 2,
+      ease: [0.62, 0, 0.76, 0.86],
     },
   },
 };
