@@ -97,19 +97,30 @@ export default function InsideModeToggle() {
     }
   };
 
-  // Snap to nearest frequency stop (reversed: left = less filtered, right = more filtered)
-  const frequencyStops = [600, 1000, 1500, 2000];
+  // Decoupled visual positions (evenly spaced) from frequency values
+  const frequencyStops = [
+    { position: 0, frequency: 2000 },
+    { position: 33.33, frequency: 1500 },
+    { position: 66.66, frequency: 1000 },
+    { position: 100, frequency: 600 },
+  ];
+
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const sliderValue = Number(e.target.value);
-    // Invert: slider 600 -> frequency 2000, slider 2000 -> frequency 600
-    const actualFrequency = 2600 - sliderValue;
+    const sliderPosition = Number(e.target.value);
+    // Find nearest position
     const nearest = frequencyStops.reduce((prev, curr) =>
-      Math.abs(curr - actualFrequency) < Math.abs(prev - actualFrequency)
+      Math.abs(curr.position - sliderPosition) <
+      Math.abs(prev.position - sliderPosition)
         ? curr
         : prev,
     );
-    setInsideFilterFrequency(nearest);
+    setInsideFilterFrequency(nearest.frequency);
   };
+
+  // Get current slider position from frequency
+  const currentPosition =
+    frequencyStops.find((stop) => stop.frequency === insideFilterFrequency)
+      ?.position ?? 100;
 
   if (!isReady) return null;
 
@@ -202,10 +213,10 @@ export default function InsideModeToggle() {
                 >
                   <input
                     type="range"
-                    min="600"
-                    max="2000"
-                    step="1"
-                    value={2600 - insideFilterFrequency}
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value={currentPosition}
                     onChange={handleSliderChange}
                     disabled={!isInsideMode}
                     aria-label="Filter frequency"
