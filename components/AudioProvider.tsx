@@ -12,6 +12,7 @@ import { getAudioController } from "@/lib/audioController";
 import logger from "@/lib/utils/logger";
 import type { BiomeType } from "@/lib/biomeDetector";
 import type { WeatherData } from "@/types/weather";
+import { track } from "@/lib/utils/analytics";
 
 interface AudioContextType {
   // State
@@ -94,9 +95,15 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
         setIsReady(true);
         setHasInteracted(true);
+        track("audio_initialize", { status: "success" });
         logger.debug("Audio system ready");
       } catch (error) {
         logger.error("Failed to initialize audio:", error);
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        track("audio_initialize", {
+          status: "failed",
+          error_reason: errorMessage,
+        });
         throw error;
       } finally {
         setIsLoading(false);
@@ -117,7 +124,9 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     const controller = controllerRef.current;
     const newMuteState = controller.toggleMute();
     setIsMuted(newMuteState);
-  }, [isReady]);
+
+    track(newMuteState ? "audio_pause" : "audio_play", { biome: currentBiome });
+  }, [isReady, currentBiome]);
 
   /**
    * Set volume level (0-1)
@@ -130,9 +139,13 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       if (isReady) {
         const controller = controllerRef.current;
         controller.setMasterVolume(clampedVolume);
+        track("audio_volume_change", {
+          volume: Math.round(clampedVolume * 100),
+          biome: currentBiome,
+        });
       }
     },
-    [isReady]
+    [isReady, currentBiome]
   );
 
   /**
@@ -146,10 +159,17 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       }
 
       const controller = controllerRef.current;
+      const previousBiome = currentBiome;
       controller.updateSoundscape(weatherData);
       setCurrentBiome(weatherData.biome.type);
+
+      track("audio_soundscape_change", {
+        from_biome: previousBiome,
+        to_biome: weatherData.biome.type,
+        location: weatherData.location?.name || "unknown",
+      });
     },
-    [isReady]
+    [isReady, currentBiome]
   );
 
   /**
@@ -164,7 +184,9 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
     const controller = controllerRef.current;
     controller.setInsideMode(newState);
-  }, [isReady, isInsideMode]);
+
+    track("inside_mode_toggle", { enabled: newState, biome: currentBiome });
+  }, [isReady, isInsideMode, currentBiome]);
 
   /**
    * Set inside filter frequency

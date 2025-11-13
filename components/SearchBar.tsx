@@ -7,6 +7,7 @@ import { ArrowRight, Shuffle, X } from "lucide-react";
 import { MapPin, Warning } from "@phosphor-icons/react";
 import { getRandomLocation } from "@/lib/randomLocations";
 import logger from "@/lib/utils/logger";
+import { track } from "@/lib/utils/analytics";
 
 const inputVariants = {
   resting: {
@@ -73,6 +74,7 @@ export default function SearchBar({
     const q = trimmedQuery;
     if (!q) return; // guard
     if (validateInput(q)) {
+      track("search_location_submit", { query: q, method: "manual" });
       onSearch(q);
       setIsDirty(false);
     }
@@ -112,6 +114,7 @@ export default function SearchBar({
         setIsDirty(false);
 
         if (index === sequence.length - 1) {
+          track("search_random_location", { location });
           onRandom?.(location);
           onSearch(location);
           setIsRandomizing(false);
@@ -155,6 +158,7 @@ export default function SearchBar({
           timezone: data.timezone,
         });
 
+        track("search_use_gps", { method: "ip", location: fullLocation });
         await onSearch(data.city);
         setLocationStatus("idle");
       } else {
@@ -162,6 +166,12 @@ export default function SearchBar({
       }
     } catch (err) {
       logger.error("✗ Find location failed:", err);
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      track("search_error", {
+        query: "gps/ip",
+        error_type: "geolocation_failed",
+        error_message: errorMessage,
+      });
       setError("Unable to find location.");
       setLocationStatus("error");
 

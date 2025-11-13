@@ -9,6 +9,7 @@ import {
   useRef,
 } from "react";
 import Cookies from "js-cookie";
+import { track } from "@/lib/utils/analytics";
 
 type Theme = "light" | "dark";
 
@@ -92,7 +93,11 @@ export function ThemeProvider({ children, initialTheme }: ThemeProviderProps) {
   }, [theme]);
 
   const toggleTheme = useCallback(() => {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+    setTheme((prev) => {
+      const newTheme = prev === "dark" ? "light" : "dark";
+      track("theme_toggle", { theme: newTheme });
+      return newTheme;
+    });
   }, []);
 
   return (

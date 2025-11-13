@@ -4,6 +4,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { motion } from "framer-motion";
 import { useAudio } from "./AudioProvider";
 import { blurInFast, blurInSubtle } from "@/lib/animations";
+import { track } from "@/lib/utils/analytics";
 
 /**
  * AudioLaunchOverlay - onboarding gate for audio playback.
@@ -26,9 +27,15 @@ export default function AudioLaunchOverlay() {
     setError(null);
     setIsBlurring(true);
     try {
+      track("audio_first_start", {});
       await initialize();
     } catch (err) {
       console.error("Failed to start audio:", err);
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      track("audio_error", {
+        error_type: "initialization_failed",
+        error_message: errorMessage,
+      });
       setError("Failed to start audio. Please try again.");
       setIsBlurring(false);
     }

@@ -17,6 +17,7 @@ import type { WeatherData } from "@/types/weather";
 import { getTimeOfDay, getBiomeImagePath } from "@/lib/biomeUtils";
 import { blurIn, blurInSubtle } from "@/lib/animations";
 import { useBackgroundPreload } from "@/hooks/useBackgroundPreload";
+import { track } from "@/lib/utils/analytics";
 
 export default function Home() {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
@@ -64,6 +65,11 @@ export default function Home() {
   useEffect(() => {
     if (weatherData && isReady) {
       updateSoundscape(weatherData);
+      track("biome_discovered", {
+        biome: weatherData.biome.type,
+        location: weatherData.location.name,
+        weather_condition: weatherData.current.condition.text,
+      });
     }
   }, [weatherData, isReady, updateSoundscape]);
 
@@ -89,6 +95,10 @@ export default function Home() {
           country,
         });
         setWeatherData(updatedData);
+        track("weather_auto_refresh", {
+          biome: updatedData.biome.type,
+          location: updatedData.location.name,
+        });
       } catch (refreshError) {
         logger.error("Failed to refresh weather data:", refreshError);
       }

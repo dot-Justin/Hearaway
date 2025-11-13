@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useAudio } from "./AudioProvider";
 import { FloatingCallout } from "./FloatingCallout";
 import { blurIn, blurInFast } from "@/lib/animations";
+import { track } from "@/lib/utils/analytics";
 
 /**
  * InsideModeToggle
@@ -84,6 +85,7 @@ export default function InsideModeToggle() {
   }, []);
 
   const handleDismissCallout = () => {
+    track("inside_mode_callout_dismiss", {});
     setShowCallout(false);
     setHasDismissedCallout(true);
     // Set cookie to expire in 1 year
@@ -115,6 +117,7 @@ export default function InsideModeToggle() {
         : prev,
     );
     setInsideFilterFrequency(nearest.frequency);
+    track("inside_mode_frequency_change", { frequency: nearest.frequency });
   };
 
   // Get current slider position from frequency
