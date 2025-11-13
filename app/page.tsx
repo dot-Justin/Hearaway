@@ -15,6 +15,7 @@ import { useTheme } from "@/components/ThemeProvider";
 import { getWeather, getWeatherByCoordinates } from "@/lib/weather";
 import logger from "@/lib/utils/logger";
 import type { WeatherData } from "@/types/weather";
+import type { BiomeType } from "@/lib/biomeDetector";
 import { getTimeOfDay, getBiomeImagePath } from "@/lib/biomeUtils";
 import { blurIn, blurInSubtle } from "@/lib/animations";
 import { useBackgroundPreload } from "@/hooks/useBackgroundPreload";
@@ -24,6 +25,7 @@ export default function Home() {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [previousBiome, setPreviousBiome] = useState<BiomeType | null>(null);
   const { updateSoundscape, isReady, hasInteracted } = useAudio();
   const { theme } = useTheme();
   const [isBrandReady, setIsBrandReady] = useState(false);
@@ -66,13 +68,17 @@ export default function Home() {
   useEffect(() => {
     if (weatherData && isReady) {
       updateSoundscape(weatherData);
-      track("biome_discovered", {
-        biome: weatherData.biome.type,
-        location: weatherData.location.name,
-        weather_condition: weatherData.current.condition.text,
-      });
+
+      if (weatherData.biome.type !== previousBiome) {
+        track("biome_discovered", {
+          biome: weatherData.biome.type,
+          location: weatherData.location.name,
+          weather_condition: weatherData.current.condition.text,
+        });
+        setPreviousBiome(weatherData.biome.type);
+      }
     }
-  }, [weatherData, isReady, updateSoundscape]);
+  }, [weatherData, isReady, updateSoundscape, previousBiome]);
 
   useEffect(() => {
     if (!weatherData) {

@@ -99,7 +99,8 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         logger.debug("Audio system ready");
       } catch (error) {
         logger.error("Failed to initialize audio:", error);
-        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
         track("audio_initialize", {
           status: "failed",
           error_reason: errorMessage,
@@ -141,7 +142,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         controller.setMasterVolume(clampedVolume);
       }
     },
-    [isReady]
+    [isReady],
   );
 
   /**
@@ -159,13 +160,15 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       controller.updateSoundscape(weatherData);
       setCurrentBiome(weatherData.biome.type);
 
-      track("audio_soundscape_change", {
-        from_biome: previousBiome,
-        to_biome: weatherData.biome.type,
-        location: weatherData.location?.name || "unknown",
-      });
+      if (previousBiome !== weatherData.biome.type) {
+        track("audio_soundscape_change", {
+          from_biome: previousBiome,
+          to_biome: weatherData.biome.type,
+          location: weatherData.location?.name || "unknown",
+        });
+      }
     },
-    [isReady, currentBiome]
+    [isReady, currentBiome],
   );
 
   /**
@@ -190,14 +193,17 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const setInsideFilterFrequency = useCallback(
     (frequency: number) => {
       setInsideFilterFrequencyState(frequency);
-      localStorage.setItem("hearaway_filter_frequency", JSON.stringify(frequency));
+      localStorage.setItem(
+        "hearaway_filter_frequency",
+        JSON.stringify(frequency),
+      );
 
       if (isReady) {
         const controller = controllerRef.current;
         controller.setInsideFilterFrequency(frequency);
       }
     },
-    [isReady]
+    [isReady],
   );
 
   // Cleanup on unmount
