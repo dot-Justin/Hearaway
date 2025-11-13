@@ -41,7 +41,19 @@ export const setAnalyticsPreference = (enabled: boolean): void => {
  * Track an analytics event (respects user preference)
  */
 export const track = (event: string, data?: EventData) => {
-  // Check user preference first
+  // Skip localhost/dev environments
+  if (typeof window !== "undefined") {
+    const hostname = window.location.hostname;
+    if (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "[::1]"
+    ) {
+      return;
+    }
+  }
+
+  // Check user preference
   if (!getAnalyticsPreference()) return;
 
   if (typeof window !== "undefined" && window.umami) {
