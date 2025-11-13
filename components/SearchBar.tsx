@@ -3,8 +3,7 @@
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { blurInFast, blurInOutQuick } from "@/lib/animations";
-import { ArrowRight, Shuffle, X } from "lucide-react";
-import { MapPin, Warning } from "@phosphor-icons/react";
+import { ArrowRight, Sparkle, X, MapPin, Warning } from "@phosphor-icons/react";
 import { getRandomLocation } from "@/lib/randomLocations";
 import logger from "@/lib/utils/logger";
 import { track } from "@/lib/utils/analytics";
@@ -334,7 +333,7 @@ export default function SearchBar({
                   exit="exit"
                   className="absolute inset-0 grid place-items-center"
                 >
-                  <X className="size-4" aria-hidden="true" />
+                  <X className="size-4" weight="bold" aria-hidden="true" />
                 </motion.span>
               ) : iconType === "go" ? (
                 <motion.span
@@ -345,7 +344,11 @@ export default function SearchBar({
                   exit="exit"
                   className="absolute inset-0 grid place-items-center"
                 >
-                  <ArrowRight className="size-4" aria-hidden="true" />
+                  <ArrowRight
+                    className="size-4"
+                    weight="bold"
+                    aria-hidden="true"
+                  />
                 </motion.span>
               ) : (
                 <motion.span
@@ -356,7 +359,11 @@ export default function SearchBar({
                   exit="exit"
                   className="absolute inset-0 grid place-items-center"
                 >
-                  <Shuffle className="size-4" aria-hidden="true" />
+                  <Sparkle
+                    className="size-4"
+                    weight="fill"
+                    aria-hidden="true"
+                  />
                 </motion.span>
               )}
             </AnimatePresence>
