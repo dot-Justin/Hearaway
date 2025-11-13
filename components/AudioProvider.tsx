@@ -139,13 +139,9 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       if (isReady) {
         const controller = controllerRef.current;
         controller.setMasterVolume(clampedVolume);
-        track("audio_volume_change", {
-          volume: Math.round(clampedVolume * 100),
-          biome: currentBiome,
-        });
       }
     },
-    [isReady, currentBiome]
+    [isReady]
   );
 
   /**

@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { blurInFast } from "@/lib/animations";
 import { useAudio } from "./AudioProvider";
+import { track } from "@/lib/utils/analytics";
 
 /** Inline icons to avoid external deps */
 function PlayIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -46,6 +47,15 @@ export default function AudioControls() {
               max="100"
               value={volumePct}
               onChange={(e) => setVolume(Number(e.target.value) / 100)}
+              onPointerUp={(e) => {
+                const finalVolume = Math.round(
+                  Number((e.target as HTMLInputElement).value)
+                );
+                track("audio_volume_change", {
+                  volume: finalVolume,
+                  biome: currentBiome,
+                });
+              }}
               aria-label="Volume"
               className={[
                 "w-full h-2 rounded-full appearance-none cursor-pointer",

@@ -117,6 +117,17 @@ export default function InsideModeToggle() {
         : prev,
     );
     setInsideFilterFrequency(nearest.frequency);
+  };
+
+  const handleSliderRelease = (e: React.PointerEvent<HTMLInputElement>) => {
+    const sliderPosition = Number((e.target as HTMLInputElement).value);
+    // Find nearest position
+    const nearest = frequencyStops.reduce((prev, curr) =>
+      Math.abs(curr.position - sliderPosition) <
+      Math.abs(prev.position - sliderPosition)
+        ? curr
+        : prev,
+    );
     track("inside_mode_frequency_change", { frequency: nearest.frequency });
   };
 
@@ -221,6 +232,7 @@ export default function InsideModeToggle() {
                     step="0.1"
                     value={currentPosition}
                     onChange={handleSliderChange}
+                    onPointerUp={handleSliderRelease}
                     disabled={!isInsideMode}
                     aria-label="Filter frequency"
                     className={[
