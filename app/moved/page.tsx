@@ -68,7 +68,7 @@ export default function MovedPage() {
             custom={0.2}
             className="font-serif text-5xl font-normal text-text-primary dark:text-dark-text-primary sm:text-6xl"
           >
-            We've moved
+            We&apos;ve moved
           </motion.h2>
 
           {/* Body text */}
