@@ -94,7 +94,7 @@ export default function AudioLaunchOverlay() {
               className="text-accent-primary dark:text-dark-accent-primary"
               style={{ "--link-delay": "0ms" } as CSSProperties}
             >
-              Xitter
+              X
             </a>{" "}
             or open an issue on{" "}
             <a
@@ -108,12 +108,11 @@ export default function AudioLaunchOverlay() {
             </a>
             .
           </p>
-          <p className="text-text-secondary dark:text-dark-text-secondary text-lg leading-relaxed">
+          {/*<p className="text-text-secondary dark:text-dark-text-secondary text-lg leading-relaxed">
             <em>
-              New in 0.3.x: &quot;Use my location&quot; to automatically set
-              your location instead of searching.
+              New in 0.x.x:
             </em>
-          </p>
+          </p>*/}
         </motion.div>
 
         {/* Start Button */}
