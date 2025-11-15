@@ -644,7 +644,7 @@ export class AudioManager {
   }
 
   /**
-   * Toggle mute state.
+   * Toggle mute state with fast fade.
    *
    * @returns New mute state (true if muted)
    *
@@ -655,7 +655,9 @@ export class AudioManager {
     this.isMuted = !this.isMuted;
 
     if (this.masterGainNode) {
-      this.masterGainNode.gain.value = this.isMuted ? 0 : this.masterVolume;
+      const currentVolume = this.masterGainNode.gain.value;
+      const targetVolume = this.isMuted ? 0 : this.masterVolume;
+      this.fadeVolume(this.masterGainNode, currentVolume, targetVolume, 0.5);
     }
 
     return this.isMuted;
