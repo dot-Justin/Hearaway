@@ -10,7 +10,8 @@
     "build-biomes": "tsx scripts/buildBiomeData.ts",
     "build-image-counts": "tsx scripts/generateImageCounts.ts",
     "convert-audio": "tsx scripts/convertAudioToOgg.ts",
-    "generate-favicons": "tsx scripts/generateFavicons.ts"
+    "generate-favicons": "tsx scripts/generateFavicons.ts",
+    "generate-thumbs": "tsx scripts/generateThumbs.ts"
   },
   "dependencies": {
     "@floating-ui/react": "^0.27.16",

@@ -13,6 +13,7 @@ import logger from "@/lib/utils/logger";
 import type { BiomeType } from "@/lib/biomeDetector";
 import type { WeatherData } from "@/types/weather";
 import { track } from "@/lib/utils/analytics";
+import { useMediaSession } from "@/hooks/useMediaSession";
 
 interface AudioContextType {
   // State
@@ -45,9 +46,11 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [hasInteracted, setHasInteracted] = useState(false);
   const [isInsideMode, setInsideModeState] = useState(false);
   const [insideFilterFrequency, setInsideFilterFrequencyState] = useState(1500);
+  const [currentWeatherData, setCurrentWeatherData] = useState<WeatherData | null>(null);
 
   const controllerRef = useRef(getAudioController());
   const initializationPromiseRef = useRef<Promise<void> | null>(null);
+  const silentAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Load inside mode preference from localStorage on mount
   useEffect(() => {
@@ -59,6 +62,13 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     }
     if (savedFrequency !== null) {
       setInsideFilterFrequencyState(JSON.parse(savedFrequency));
+    }
+  }, []);
+
+  // Set volume on silent audio element
+  useEffect(() => {
+    if (silentAudioRef.current) {
+      silentAudioRef.current.volume = 0.01;
     }
   }, []);
 
@@ -91,6 +101,16 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         if (isInsideMode) {
           controller.setInsideMode(true);
           controller.setInsideFilterFrequency(insideFilterFrequency);
+        }
+
+        // Start silent audio element for media session
+        if (silentAudioRef.current) {
+          try {
+            await silentAudioRef.current.play();
+            logger.debug("Silent audio started for media session");
+          } catch (error) {
+            logger.warn("Failed to start silent audio:", error);
+          }
         }
 
         setIsReady(true);
@@ -159,6 +179,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       const previousBiome = currentBiome;
       controller.updateSoundscape(weatherData);
       setCurrentBiome(weatherData.biome.type);
+      setCurrentWeatherData(weatherData);
 
       if (previousBiome !== weatherData.biome.type) {
         track("audio_soundscape_change", {
@@ -206,13 +227,45 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     [isReady],
   );
 
+  // Sync silent audio element with mute state
+  useEffect(() => {
+    if (!isReady || !silentAudioRef.current) return;
+
+    const audio = silentAudioRef.current;
+
+    if (isMuted) {
+      audio.pause();
+    } else {
+      audio.play().catch((error) => {
+        logger.warn("Failed to play silent audio:", error);
+      });
+    }
+  }, [isReady, isMuted]);
+
+  // Integrate with Media Session API
+  useMediaSession({
+    isReady,
+    isMuted,
+    locationName: currentWeatherData?.location.name,
+    locationCountry: currentWeatherData?.location.country,
+    biome: currentWeatherData?.biome.type,
+    localtime: currentWeatherData?.location.localtime,
+    lat: currentWeatherData?.biome.coordinates.lat,
+    lon: currentWeatherData?.biome.coordinates.lon,
+    onToggleMute: toggleMute,
+  });
+
   // Cleanup on unmount
   useEffect(() => {
     const controller = controllerRef.current;
+    const audio = silentAudioRef.current;
 
     return () => {
       if (isReady && controller) {
         controller.stopSoundscape(2); // Gentle fade out
+      }
+      if (audio) {
+        audio.pause();
       }
     };
   }, [isReady]);
@@ -235,7 +288,17 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AudioContext.Provider value={value}>{children}</AudioContext.Provider>
+    <AudioContext.Provider value={value}>
+      {/* Hidden audio element for Media Session API */}
+      <audio
+        ref={silentAudioRef}
+        src="/silent.ogg"
+        loop
+        preload="auto"
+        style={{ display: "none" }}
+      />
+      {children}
+    </AudioContext.Provider>
   );
 }
 
