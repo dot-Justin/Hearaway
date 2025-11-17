@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { blurInFast } from "@/lib/animations";
 import { useAudio } from "./AudioProvider";
@@ -29,6 +30,44 @@ function PauseIcon(props: React.SVGProps<SVGSVGElement>) {
 export default function AudioControls() {
   const { isReady, isMuted, volume, setVolume, toggleMute, currentBiome } =
     useAudio();
+
+  // Global keyboard shortcuts
+  useEffect(() => {
+    if (!isReady || !currentBiome) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
+        return;
+      }
+
+      switch (e.code) {
+        case "Space":
+          e.preventDefault();
+          toggleMute();
+          track("audio_keyboard_toggle", { action: isMuted ? "play" : "pause" });
+          break;
+        case "ArrowUp":
+          e.preventDefault();
+          const newVolumeUp = Math.min(1, volume + 0.05);
+          setVolume(newVolumeUp);
+          track("audio_keyboard_volume", { volume: Math.round(newVolumeUp * 100) });
+          break;
+        case "ArrowDown":
+          e.preventDefault();
+          const newVolumeDown = Math.max(0, volume - 0.05);
+          setVolume(newVolumeDown);
+          track("audio_keyboard_volume", { volume: Math.round(newVolumeDown * 100) });
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isReady, currentBiome, isMuted, volume, toggleMute, setVolume]);
 
   if (!isReady || !currentBiome) return null;
 
