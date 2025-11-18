@@ -96,9 +96,9 @@ export default function AudioControls() {
                 });
               }}
               aria-label="Volume"
+              style={{ "--slider-fill": `${volumePct}%` } as React.CSSProperties}
               className={[
-                "w-full h-2 rounded-full appearance-none cursor-pointer",
-                "bg-accent-secondary/20 dark:bg-dark-accent-secondary/20",
+                "w-full h-2 rounded-full appearance-none cursor-pointer slider-fill",
                 // WebKit thumb
                 "[&::-webkit-slider-thumb]:appearance-none",
                 "[&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4",

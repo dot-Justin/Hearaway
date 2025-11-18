@@ -235,9 +235,9 @@ export default function InsideModeToggle() {
                     onPointerUp={handleSliderRelease}
                     disabled={!isInsideMode}
                     aria-label="Filter frequency"
+                    style={{ "--slider-fill": `${currentPosition}%` } as React.CSSProperties}
                     className={[
-                      "w-40 h-2 rounded-full appearance-none cursor-pointer",
-                      "bg-accent-secondary/20 dark:bg-dark-accent-secondary/20",
+                      "w-40 h-2 rounded-full appearance-none cursor-pointer slider-fill",
                       isInsideMode
                         ? "opacity-100"
                         : "opacity-50 cursor-not-allowed",
