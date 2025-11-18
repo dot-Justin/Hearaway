@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import SearchBar from "@/components/SearchBar";
 import WeatherDisplay from "@/components/WeatherDisplay";
 import BackgroundManager from "@/components/BackgroundManager";
@@ -17,7 +17,7 @@ import logger from "@/lib/utils/logger";
 import type { WeatherData } from "@/types/weather";
 import type { BiomeType } from "@/lib/biomeDetector";
 import { getTimeOfDay, getBiomeImagePath } from "@/lib/biomeUtils";
-import { blurIn, blurInSubtle } from "@/lib/animations";
+import { blurIn, blurInSubtle, blurOutFast } from "@/lib/animations";
 import { useBackgroundPreload } from "@/hooks/useBackgroundPreload";
 import { track } from "@/lib/utils/analytics";
 
@@ -188,13 +188,21 @@ export default function Home() {
           </motion.div>
 
           {/* Error State */}
-          {error && (
-            <div className="text-center">
-              <div className="inline-block px-6 py-3 bg-warm/10 dark:bg-dark-warm/10 border border-warm/30 dark:border-dark-warm/30 rounded-lg">
-                <p className="text-warm dark:text-dark-warm">{error}</p>
-              </div>
-            </div>
-          )}
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                className="text-center"
+                variants={blurOutFast}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+              >
+                <div className="inline-block px-6 py-3 bg-warm/10 dark:bg-dark-warm/10 border border-warm/30 dark:border-dark-warm/30 rounded-lg">
+                  <p className="text-warm dark:text-dark-warm">{error}</p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Weather Display / Placeholder */}
           <div className="flex justify-center min-h-[26rem] w-full">
