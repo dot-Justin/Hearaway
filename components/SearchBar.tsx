@@ -227,7 +227,7 @@ export default function SearchBar({
             "bg-surface dark:bg-dark-surface",
             "border border-accent-secondary/30 dark:border-dark-accent-secondary/30",
             "transition-[border,box-shadow]",
-            "focus-within:border-accent-primary dark:focus-within:border-dark-accent-primary",
+            "search-input-container",
             isBusy || isGettingLocation ? "opacity-60" : "",
           ].join(" ")}
         >
@@ -288,6 +288,7 @@ export default function SearchBar({
             "shadow-sm",
             "disabled:opacity-50 disabled:cursor-not-allowed",
             "grid place-items-center",
+            "focus-ring",
           ].join(" ")}
         >
           <span className="relative inline-flex size-4 items-center justify-center">
@@ -394,7 +395,7 @@ export default function SearchBar({
           onClick={handleUseLocation}
           disabled={isLocating}
           className={[
-            "relative flex items-center text-sm transition-colors",
+            "relative flex items-center text-sm transition-colors rounded-md px-2 py-1 focus-ring",
             locationStatus === "error"
               ? "text-warm/70 dark:text-dark-warm/70"
               : "text-text-primary/50 dark:text-dark-text-primary/50 hover:text-text-primary/70 dark:hover:text-dark-text-primary/70",

@@ -168,7 +168,7 @@ export default function InsideModeToggle() {
                   ? "Outside Mode: Clear Audio"
                   : "Inside Mode: Muffled Audio"
               }
-              className="size-12 grid place-items-center rounded-full bg-accent-secondary dark:bg-dark-accent-secondary hover:bg-accent-primary dark:hover:bg-dark-accent-primary text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-primary/50 transition-colors"
+              className="size-12 grid place-items-center rounded-full bg-accent-secondary dark:bg-dark-accent-secondary hover:bg-accent-primary dark:hover:bg-dark-accent-primary text-white shadow-sm focus-ring transition-colors"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -279,7 +279,7 @@ export default function InsideModeToggle() {
           </p>
           <button
             onClick={handleDismissCallout}
-            className="text-sm font-semibold text-accent-primary dark:text-dark-accent-primary hover:underline transition-colors"
+            className="text-sm font-semibold text-accent-primary dark:text-dark-accent-primary hover:underline transition-colors rounded px-2 py-1 focus-ring"
           >
             Got it, dismiss
           </button>

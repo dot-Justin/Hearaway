@@ -126,7 +126,7 @@ export default function AudioControls() {
             onClick={toggleMute}
             aria-label={label}
             title={label}
-            className="size-10 grid place-items-center rounded-full bg-accent-secondary dark:bg-dark-accent-secondary hover:bg-accent-primary dark:hover:bg-dark-accent-primary text-text-primary dark:text-dark-text-primary shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-primary/50"
+            className="size-10 grid place-items-center rounded-full bg-accent-secondary dark:bg-dark-accent-secondary hover:bg-accent-primary dark:hover:bg-dark-accent-primary text-text-primary dark:text-dark-text-primary shadow-sm focus-ring"
             variants={blurInFast}
             initial="hidden"
             animate="visible"

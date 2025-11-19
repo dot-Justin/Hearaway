@@ -125,7 +125,7 @@ export default function AudioLaunchOverlay() {
                      text-text-primary dark:text-dark-text-primary
                      font-medium text-lg
                      disabled:opacity-50 disabled:cursor-not-allowed
-                     transition-colors"
+                     transition-colors focus-ring"
           aria-label={isLoading ? "Starting audio..." : "Start soundscape"}
           variants={blurInFast}
           initial="hidden"

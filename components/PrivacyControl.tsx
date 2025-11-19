@@ -55,7 +55,7 @@ export default function PrivacyControl() {
             onClick={() => setShowCallout(!showCallout)}
             aria-label="Privacy & Analytics"
             title="Privacy & Analytics"
-            className="size-9 grid place-items-center rounded-full bg-accent-secondary/80 dark:bg-dark-accent-secondary/80 hover:bg-accent-primary dark:hover:bg-dark-accent-primary text-text-primary dark:text-dark-text-primary shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-primary/50 transition-colors backdrop-blur-sm"
+            className="size-9 grid place-items-center rounded-full bg-accent-secondary/80 dark:bg-dark-accent-secondary/80 hover:bg-accent-primary dark:hover:bg-dark-accent-primary text-text-primary dark:text-dark-text-primary shadow-sm focus-ring transition-colors backdrop-blur-sm"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -93,7 +93,7 @@ export default function PrivacyControl() {
               aria-checked={analyticsEnabled}
               onClick={handleToggleAnalytics}
               className={[
-                "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-accent-primary/50 focus:ring-offset-2",
+                "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-ring",
                 analyticsEnabled
                   ? "bg-accent-primary dark:bg-dark-accent-primary"
                   : "bg-accent-secondary/40 dark:bg-dark-accent-secondary/40",
@@ -110,7 +110,7 @@ export default function PrivacyControl() {
 
           <button
             onClick={() => setShowCallout(false)}
-            className="text-sm font-semibold text-accent-primary dark:text-dark-accent-primary hover:underline transition-colors"
+            className="text-sm font-semibold text-accent-primary dark:text-dark-accent-primary hover:underline transition-colors rounded px-2 py-1 focus-ring"
           >
             Close
           </button>

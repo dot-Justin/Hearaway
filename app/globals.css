@@ -113,3 +113,34 @@ input[type="range"].slider-fill {
     rgba(17, 62, 83, 0.3) 100%
   );
 }
+
+/* Focus ring utility */
+.focus-ring:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 150, 181, 0.5);
+}
+
+.dark .focus-ring:focus {
+  box-shadow: 0 0 0 2px rgba(0, 91, 133, 0.5);
+}
+
+/* SearchBar container focus-within */
+.search-input-container:focus-within {
+  border-color: rgb(0, 150, 181);
+  box-shadow: 0 0 0 2px rgba(0, 150, 181, 0.5);
+}
+
+.dark .search-input-container:focus-within {
+  border-color: rgb(0, 91, 133);
+  box-shadow: 0 0 0 2px rgba(0, 91, 133, 0.5);
+}
+
+/* Slider focus ring styling */
+input[type="range"]:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 150, 181, 0.2);
+}
+
+.dark input[type="range"]:focus {
+  box-shadow: 0 0 0 3px rgba(0, 91, 133, 0.3);
+}
