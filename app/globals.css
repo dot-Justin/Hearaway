@@ -19,36 +19,6 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-serif;
   }
-
-  a {
-    position: relative;
-    display: inline-block;
-    color: inherit;
-    text-decoration: none;
-    padding-bottom: 0px;
-    --link-delay: 0ms;
-    --link-duration: 500ms;
-    --link-easing: cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  a::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    bottom: 0;
-    width: 100%;
-    height: 1px;
-    background: currentColor;
-    transform: scaleX(0);
-    transform-origin: left;
-    animation: link-underline-in var(--link-duration) var(--link-easing) forwards;
-    animation-delay: var(--link-delay);
-  }
-
-  a:hover::after,
-  a:focus-visible::after {
-    transform: scaleX(1);
-  }
 }
 
 /* Film grain canvas base sizing */
@@ -58,19 +28,6 @@ canvas[data-film-grain] {
   width: 100%;
   height: 100%;
   pointer-events: none;
-}
-
-@keyframes link-underline-in {
-  to {
-    transform: scaleX(1);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  a::after {
-    animation: none;
-    transform: scaleX(1);
-  }
 }
 
 .bg-overlay-light {
