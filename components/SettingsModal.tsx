@@ -341,7 +341,8 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     View on GitHub
                   </a>
                 </p>
-                <div className="pt-2">
+                {/*TODO edit with specifics vvvv*/}
+                {/*<div className="pt-2">
                   <p className="font-medium text-text-primary dark:text-dark-text-primary mb-1">
                     Credits
                   </p>
@@ -349,7 +350,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     Ambient soundscapes and biome data powered by open datasets
                     and community contributions.
                   </p>
-                </div>
+                </div>*/}
               </div>
             </div>
           </motion.div>
