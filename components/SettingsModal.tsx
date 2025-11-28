@@ -198,7 +198,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <p className="text-base font-medium text-text-primary dark:text-dark-text-primary">
-                      Inside/Outside Mode
+                      Inside Mode
                     </p>
                     <p className="text-sm text-text-secondary dark:text-dark-text-secondary">
                       Simulates hearing from indoors
@@ -226,57 +226,90 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 </div>
 
                 {/* Frequency Slider */}
-                <div className="space-y-2 pt-2">
-                  <label
-                    htmlFor="filter-frequency"
-                    className="text-sm text-text-secondary dark:text-dark-text-secondary"
-                  >
-                    Filter frequency
-                  </label>
-                  <input
-                    id="filter-frequency"
-                    type="range"
-                    min="0"
-                    max="100"
-                    step="0.1"
-                    value={currentPosition}
-                    onChange={handleSliderChange}
-                    onPointerUp={handleSliderRelease}
-                    disabled={!isInsideMode}
-                    aria-label="Filter frequency"
-                    style={
-                      {
-                        "--slider-fill": `${currentPosition}%`,
-                      } as React.CSSProperties
-                    }
-                    className={[
-                      "w-full h-2 rounded-full appearance-none cursor-pointer slider-fill",
-                      isInsideMode
-                        ? "opacity-100"
-                        : "opacity-50 cursor-not-allowed",
-                      // WebKit thumb
-                      "[&::-webkit-slider-thumb]:appearance-none",
-                      "[&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4",
-                      "[&::-webkit-slider-thumb]:rounded-full",
-                      "[&::-webkit-slider-thumb]:bg-accent-primary",
-                      "dark:[&::-webkit-slider-thumb]:bg-dark-accent-primary",
-                      "[&::-webkit-slider-thumb]:cursor-pointer",
-                      "[&::-webkit-slider-thumb]:transition-transform",
-                      "[&::-webkit-slider-thumb]:hover:scale-110",
-                      // Firefox thumb
-                      "[&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4",
-                      "[&::-moz-range-thumb]:rounded-full",
-                      "[&::-moz-range-thumb]:bg-accent-primary",
-                      "dark:[&::-moz-range-thumb]:bg-dark-accent-primary",
-                      "[&::-moz-range-thumb]:border-0",
-                      "[&::-moz-range-thumb]:cursor-pointer",
-                      "[&::-moz-range-thumb]:transition-transform",
-                      "[&::-moz-range-thumb]:hover:scale-110",
-                    ].join(" ")}
-                  />
-                  <div className="flex justify-between text-xs text-text-secondary/70 dark:text-dark-text-secondary/70">
-                    <span>Clear</span>
-                    <span>Muffled</span>
+                <div className="pt-2">
+                  <div className="flex items-center gap-3">
+                    {/* Outside mode icon (left - clear end) */}
+                    <div
+                      className={[
+                        "size-5 flex-shrink-0 text-text-primary dark:text-dark-text-primary",
+                        isInsideMode ? "opacity-100" : "opacity-50",
+                      ].join(" ")}
+                      aria-hidden="true"
+                    >
+                      <svg viewBox="0 0 340.08 318.43" className="w-full h-full">
+                        <path
+                          fill="currentColor"
+                          d="M262.76,87.56c-6.94,8.93-10.58,19.58-10.58,31.18,0,4.18.47,8.23,1.4,12.13-2.17,1.78-4.23,3.75-6.14,5.92-9.84,11.17-14.19,25.42-12.29,40.16l14.91,114.73c.98,7.56,3.65,14.55,7.61,20.61-5.51,3.87-12.23,6.14-19.48,6.14H33.97C15.2,318.43,0,303.21,0,284.46V24.84C0,17.68,5.8,11.88,12.97,11.88h24.95c.31,0,.61,0,.91.04,6.74.46,12.07,6.07,12.07,12.92v30.71l10.39-7.81,34.28-25.77,20.16-15.15c12.1-9.11,28.78-9.09,40.88.04l102.05,77.06c1.47,1.11,2.84,2.33,4.1,3.64Z"
+                        />
+                        <path
+                          fill="currentColor"
+                          d="M322.62,118.74c0,5.29-1.89,9.81-5.65,13.57s-8.29,5.64-13.57,5.64-9.81-1.88-13.57-5.64c-3.76-3.76-5.65-8.28-5.65-13.57s1.89-9.81,5.65-13.57c3.76-3.76,8.29-5.64,13.57-5.64s9.81,1.88,13.57,5.64c3.76,3.76,5.65,8.29,5.65,13.57Z"
+                        />
+                        <path
+                          fill="currentColor"
+                          d="M339.91,172.84l-14.9,114.72c-1.14,8.77-8.61,15.33-17.45,15.33h-8.32c-8.84,0-16.31-6.56-17.45-15.33l-9.63-74.14-5.27-40.58c-.73-5.64.78-10.6,4.54-14.87.24-.27.48-.53.73-.78,3.64-3.75,8.1-5.62,13.38-5.62h35.71c5.65,0,10.35,2.13,14.12,6.4,3.76,4.27,5.27,9.23,4.54,14.87Z"
+                        />
+                      </svg>
+                    </div>
+
+                    {/* Slider */}
+                    <input
+                      id="filter-frequency"
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      value={currentPosition}
+                      onChange={handleSliderChange}
+                      onPointerUp={handleSliderRelease}
+                      disabled={!isInsideMode}
+                      aria-label="Filter frequency"
+                      style={
+                        {
+                          "--slider-fill": `${currentPosition}%`,
+                        } as React.CSSProperties
+                      }
+                      className={[
+                        "flex-1 h-2 rounded-full appearance-none cursor-pointer slider-fill",
+                        isInsideMode
+                          ? "opacity-100"
+                          : "opacity-50 cursor-not-allowed",
+                        // WebKit thumb
+                        "[&::-webkit-slider-thumb]:appearance-none",
+                        "[&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4",
+                        "[&::-webkit-slider-thumb]:rounded-full",
+                        "[&::-webkit-slider-thumb]:bg-accent-primary",
+                        "dark:[&::-webkit-slider-thumb]:bg-dark-accent-primary",
+                        "[&::-webkit-slider-thumb]:cursor-pointer",
+                        "[&::-webkit-slider-thumb]:transition-transform",
+                        "[&::-webkit-slider-thumb]:hover:scale-110",
+                        // Firefox thumb
+                        "[&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4",
+                        "[&::-moz-range-thumb]:rounded-full",
+                        "[&::-moz-range-thumb]:bg-accent-primary",
+                        "dark:[&::-moz-range-thumb]:bg-dark-accent-primary",
+                        "[&::-moz-range-thumb]:border-0",
+                        "[&::-moz-range-thumb]:cursor-pointer",
+                        "[&::-moz-range-thumb]:transition-transform",
+                        "[&::-moz-range-thumb]:hover:scale-110",
+                      ].join(" ")}
+                    />
+
+                    {/* Inside mode icon (right - muffled end) */}
+                    <div
+                      className={[
+                        "size-5 flex-shrink-0 text-text-primary dark:text-dark-text-primary",
+                        isInsideMode ? "opacity-100" : "opacity-50",
+                      ].join(" ")}
+                      aria-hidden="true"
+                    >
+                      <svg viewBox="0 0 340.08 318.43" className="w-full h-full">
+                        <path
+                          fill="currentColor"
+                          d="M258.66,83.92L156.61,6.86c-12.1-9.13-28.78-9.15-40.88-.04l-20.16,15.15-34.28,25.77-10.39,7.81v-30.71c0-6.85-5.33-12.46-12.07-12.92-.3-.03-.6-.04-.91-.04H12.97C5.8,11.88,0,17.68,0,24.84v259.62c0,18.75,15.2,33.97,33.97,33.97h204.22c18.77,0,33.97-15.22,33.97-33.97V111.03c0-10.65-4.99-20.69-13.5-27.11ZM122.51,72.43c3.76-3.76,8.28-5.64,13.57-5.64s9.8,1.88,13.57,5.64c3.76,3.77,5.64,8.29,5.64,13.57s-1.88,9.81-5.64,13.57-8.29,5.65-13.57,5.65-9.81-1.88-13.57-5.65c-3.77-3.76-5.65-8.28-5.65-13.57s1.88-9.8,5.65-13.57ZM172.59,140.11l-14.91,114.71c-1.14,8.77-8.6,15.33-17.44,15.33h-8.32c-8.84,0-16.31-6.56-17.45-15.33l-14.9-114.71c-.74-5.65.78-10.61,4.54-14.88,3.77-4.27,8.47-6.4,14.11-6.4h35.71c5.65,0,10.35,2.13,14.11,6.4,3.77,4.27,5.28,9.23,4.55,14.88Z"
+                        />
+                      </svg>
+                    </div>
                   </div>
                 </div>
               </div>
