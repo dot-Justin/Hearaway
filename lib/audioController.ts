@@ -54,6 +54,7 @@ export class AudioController {
   private audioManager = getAudioManager();
   private currentSoundscape: SoundLayer[] = [];
   private isReady = false;
+  private transitionInProgress = false;
 
   /**
    * Initialize the audio system.
@@ -105,6 +106,23 @@ export class AudioController {
   }
 
   /**
+   * Cancel any in-progress transition and immediately stop all sounds.
+   *
+   * Use this when rapidly changing locations to prevent audio overlap
+   * from previous soundscapes. Ensures a clean slate before starting
+   * a new soundscape.
+   *
+   * @example
+   * controller.cancelCurrentTransition();  // Stop all before new location
+   */
+  cancelCurrentTransition(): void {
+    logger.debug('Cancelling current soundscape and stopping all audio');
+    this.audioManager.stopAllImmediately();
+    this.currentSoundscape = [];
+    this.transitionInProgress = false;
+  }
+
+  /**
    * Update the soundscape based on weather data.
    *
    * Intelligently transitions from the current soundscape to a new one,
@@ -128,6 +146,9 @@ export class AudioController {
       logger.error('AudioController not initialized');
       return;
     }
+
+    // Cancel any in-progress transition to prevent overlap
+    this.cancelCurrentTransition();
 
     const transition = { ...DEFAULT_TRANSITION, ...config };
 
@@ -172,6 +193,8 @@ export class AudioController {
     newLayers: SoundLayer[],
     config: SoundscapeTransitionConfig
   ): Promise<void> {
+    this.transitionInProgress = true;
+
     // If clearAll is true, stop everything and start fresh
     if (config.clearAll) {
       this.audioManager.stopAll(config.fadeOutDuration);
@@ -185,6 +208,7 @@ export class AudioController {
             startDelay: layer.startDelay,
           });
         }
+        this.transitionInProgress = false;
       }, config.fadeOutDuration * 1000);
       return;
     }
@@ -232,6 +256,11 @@ export class AudioController {
       added: toAdd.map((l) => l.soundId),
       kept: toKeep.map((l) => l.soundId),
     });
+
+    // Mark transition complete after fade-in duration
+    setTimeout(() => {
+      this.transitionInProgress = false;
+    }, config.fadeInDuration * 1000);
   }
 
   /**
@@ -280,6 +309,7 @@ export class AudioController {
   stopSoundscape(fadeOutDuration = 3): void {
     this.audioManager.stopAll(fadeOutDuration);
     this.currentSoundscape = [];
+    this.transitionInProgress = false;
   }
 
   /**

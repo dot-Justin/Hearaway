@@ -36,6 +36,7 @@ export class AudioManager {
   private activeTracks: Map<string, AudioTrack> = new Map();
   private audioBuffers: Map<string, AudioBuffer> = new Map();
   private loopTimeouts: Map<string, number> = new Map();
+  private fadeOutTimeouts: Map<string, number> = new Map();
   private playTokens: Map<string, number> = new Map();
 
   // State
@@ -569,15 +570,25 @@ export class AudioManager {
       this.loopTimeouts.delete(soundId);
     }
 
+    // Clear any existing fade-out timeout
+    const existingFadeOut = this.fadeOutTimeouts.get(soundId);
+    if (existingFadeOut) {
+      clearTimeout(existingFadeOut);
+      this.fadeOutTimeouts.delete(soundId);
+    }
+
     if (fadeOutDuration > 0) {
       // Fade out, then stop
       track.isFadingOut = true;
       this.fadeVolume(track.gainNode, track.volume, 0, fadeOutDuration);
 
-      setTimeout(() => {
+      const timeoutId = window.setTimeout(() => {
         track.source.stop();
         this.activeTracks.delete(soundId);
+        this.fadeOutTimeouts.delete(soundId);
       }, fadeOutDuration * 1000);
+
+      this.fadeOutTimeouts.set(soundId, timeoutId);
     } else {
       // Immediate stop
       track.source.stop();
@@ -596,6 +607,50 @@ export class AudioManager {
   stopAll(fadeOutDuration = 0): void {
     const soundIds = Array.from(this.activeTracks.keys());
     soundIds.forEach((soundId) => this.stop(soundId, fadeOutDuration));
+  }
+
+  /**
+   * Immediately stop all sounds without fade-out.
+   *
+   * Cancels all scheduled fade-outs and loop crossfades, and stops all tracks instantly.
+   * Use this for rapid transitions where overlapping audio from previous states is unacceptable.
+   *
+   * @example
+   * audioManager.stopAllImmediately();  // Hard stop for location change
+   */
+  stopAllImmediately(): void {
+    if (!this.audioContext) return;
+
+    // Cancel all scheduled fade-out timeouts
+    this.fadeOutTimeouts.forEach((timeoutId) => clearTimeout(timeoutId));
+    this.fadeOutTimeouts.clear();
+
+    // Cancel all scheduled loop crossfades
+    this.loopTimeouts.forEach((timeoutId) => clearTimeout(timeoutId));
+    this.loopTimeouts.clear();
+
+    // Stop all active tracks immediately
+    this.activeTracks.forEach((track, soundId) => {
+      // Cancel any scheduled gain automation
+      if (track.gainNode && this.audioContext) {
+        const now = this.audioContext.currentTime;
+        track.gainNode.gain.cancelScheduledValues(now);
+        track.gainNode.gain.setValueAtTime(0, now);
+      }
+
+      // Stop source immediately
+      try {
+        track.source.stop();
+      } catch {
+        // Source might already be stopped
+      }
+
+      // Invalidate play token to prevent any pending async operations
+      this.incrementPlayToken(soundId);
+    });
+
+    // Clear all tracks
+    this.activeTracks.clear();
   }
 
   /**
@@ -835,6 +890,8 @@ export class AudioManager {
     // Clear all timeouts
     this.loopTimeouts.forEach((timeoutId) => clearTimeout(timeoutId));
     this.loopTimeouts.clear();
+    this.fadeOutTimeouts.forEach((timeoutId) => clearTimeout(timeoutId));
+    this.fadeOutTimeouts.clear();
 
     // Close audio context
     if (this.audioContext && this.audioContext.state !== "closed") {
