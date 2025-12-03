@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import FilmGrain from "@/components/FilmGrain";
+import Noise from "@/components/Noise";
 import { backgroundCrossfade } from "@/lib/animations";
 
 interface BackgroundManagerProps {
@@ -25,7 +25,9 @@ interface BackgroundManagerProps {
  * - Old image exits with blur+fade to reveal new image
  * - Standard practice: single-layer fade for performance
  */
-export default function BackgroundManager({ backgroundImage }: BackgroundManagerProps) {
+export default function BackgroundManager({
+  backgroundImage,
+}: BackgroundManagerProps) {
   const [displayedImage, setDisplayedImage] = useState(backgroundImage);
   const [previousImage, setPreviousImage] = useState<string | null>(null);
   const prevBackgroundRef = useRef(backgroundImage);
@@ -93,8 +95,8 @@ export default function BackgroundManager({ backgroundImage }: BackgroundManager
         style={{ zIndex: 2 }}
       />
 
-      {/* Film grain overlay constrained to background layers */}
-      <FilmGrain className="pointer-events-none absolute inset-0 z-10 opacity-20 dark:opacity-40" />
+      {/* Noise grain overlay constrained to background layers */}
+      <Noise className="pointer-events-none absolute inset-0 z-10 opacity-20 dark:opacity-40" />
     </div>
   );
 }
