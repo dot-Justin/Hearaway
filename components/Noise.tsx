@@ -32,10 +32,18 @@ const Noise = ({
 
     let frame = 0;
     let animationId: number;
-    const canvasSize = 384;
+    let canvasSize = 384;
+
+    const getCanvasSize = () => {
+      const width = window.innerWidth;
+      if (width < 640) return 200; // mobile
+      if (width < 1024) return 300; // tablet
+      return 384; // desktop
+    };
 
     const resize = () => {
       if (!canvas) return;
+      canvasSize = getCanvasSize();
       canvas.width = canvasSize;
       canvas.height = canvasSize;
 
