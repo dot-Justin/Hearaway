@@ -35,8 +35,6 @@ interface AudioContextType {
   setInsideFilterFrequency: (frequency: number) => void;
 }
 
-const VOLUME_COOKIE_KEY = "hearaway_volume";
-
 const AudioContext = createContext<AudioContextType | undefined>(undefined);
 
 export function AudioProvider({ children }: { children: React.ReactNode }) {
@@ -54,26 +52,18 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const initializationPromiseRef = useRef<Promise<void> | null>(null);
   const silentAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Load volume from cookie on mount
+  // Load preferences from localStorage on mount
   useEffect(() => {
-    const savedVolume = document.cookie
-      .split("; ")
-      .find((row) => row.startsWith(VOLUME_COOKIE_KEY))
-      ?.split("=")[1];
+    const savedVolume = localStorage.getItem("hearaway_volume");
+    const savedInsideMode = localStorage.getItem("hearaway_inside_mode");
+    const savedFrequency = localStorage.getItem("hearaway_filter_frequency");
 
-    if (savedVolume !== undefined) {
+    if (savedVolume !== null) {
       const volumeValue = parseFloat(savedVolume);
       if (!isNaN(volumeValue) && volumeValue >= 0 && volumeValue <= 1) {
         setVolumeState(volumeValue);
       }
     }
-  }, []);
-
-  // Load inside mode preference from localStorage on mount
-  useEffect(() => {
-    const savedInsideMode = localStorage.getItem("hearaway_inside_mode");
-    const savedFrequency = localStorage.getItem("hearaway_filter_frequency");
-
     if (savedInsideMode !== null) {
       setInsideModeState(JSON.parse(savedInsideMode));
     }
@@ -173,11 +163,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     (newVolume: number) => {
       const clampedVolume = Math.max(0, Math.min(1, newVolume));
       setVolumeState(clampedVolume);
-
-      // Save to cookie with 1 year expiry
-      const expiryDate = new Date();
-      expiryDate.setFullYear(expiryDate.getFullYear() + 1);
-      document.cookie = `${VOLUME_COOKIE_KEY}=${clampedVolume}; path=/; expires=${expiryDate.toUTCString()}`;
+      localStorage.setItem("hearaway_volume", String(clampedVolume));
 
       if (isReady) {
         const controller = controllerRef.current;
